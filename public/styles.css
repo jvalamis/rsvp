@@ -52,8 +52,7 @@ body {
 .container {
   max-width: 800px;
   margin: auto;
-  padding: 0 1rem;
-  padding-block: 2rem;
+  padding: 1rem;
   width: 100%;
 }
 
@@ -72,8 +71,9 @@ body {
 .input-section,
 .reader-section {
   background: var(--surface-color);
-  padding: 2rem;
-  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 0.5rem;
+  border-radius: 6px;
   box-shadow: var(--surface-shadow);
 }
 
@@ -105,7 +105,9 @@ textarea:focus {
 
 .controls {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
   align-items: center;
   margin-bottom: 1rem;
 }
@@ -132,15 +134,15 @@ button:hover {
 }
 
 .word-display {
-  font-size: clamp(2rem, 5vw, 3rem); /* Responsive font size */
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
   text-align: center;
-  min-height: 150px;
+  min-height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: "SF Mono", Consolas, "Liberation Mono", Menlo, monospace; /* Better monospace fonts */
   position: relative;
-  padding: 2rem;
+  padding: 1rem;
   line-height: 1.4;
   color: var(--text-color);
   /* Reduce visual noise */
@@ -254,14 +256,16 @@ button:hover {
 
 .advanced-controls {
   display: flex;
-  gap: 2rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
 }
 
 .advanced-controls label {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
   align-items: center;
   gap: 0.5rem;
 }
@@ -340,8 +344,8 @@ button:hover {
 
 .quick-start {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
+  justify-content: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
 }
@@ -350,7 +354,7 @@ button:hover {
   background-color: var(--surface-color);
   color: var(--text-color);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -368,4 +372,76 @@ button:hover {
 .button-description {
   font-size: 0.75rem;
   opacity: 0.7;
+}
+
+/* Media queries for larger screens */
+@media (min-width: 640px) {
+  .container {
+    padding: 2rem;
+  }
+
+  .input-section,
+  .reader-section {
+    padding: 2rem;
+    margin: 0;
+  }
+
+  .quick-start {
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .secondary-button {
+    flex: 0 1 auto;
+    min-width: auto;
+  }
+
+  .advanced-controls {
+    flex-direction: row;
+    padding: 1.5rem 0;
+  }
+
+  .word-display {
+    font-size: clamp(2rem, 5vw, 3rem);
+    min-height: 150px;
+    padding: 2rem;
+  }
+}
+
+/* Keyboard controls visibility */
+.keyboard-controls {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .keyboard-controls {
+    display: block;
+  }
+}
+
+/* Touch-friendly inputs */
+input[type="range"],
+input[type="number"],
+button {
+  min-height: 44px;
+}
+
+/* Prevent zoom on input focus for iOS */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  input[type="number"],
+  input[type="range"] {
+    font-size: 16px;
+  }
+}
+
+/* Dark mode improvements for OLED screens */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #000;
+  }
+
+  :root {
+    --bg-color: #000;
+    --surface-color: #1a1a1a;
+  }
 }
