@@ -19,6 +19,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Speed Reader app listening at http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Speed Reader app listening at http://0.0.0.0:${PORT}`);
 });
