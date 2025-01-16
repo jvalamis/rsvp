@@ -1,10 +1,39 @@
-* {
+/* CSS Reset and Consistency */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Ensure consistent font rendering */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Force scrollbar to prevent layout shifts */
+html {
+  overflow-y: scroll;
+}
+
+/* Remove default button styles */
+button {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Consistent input styling */
+input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border-radius: 0;
 }
 
 :root {
