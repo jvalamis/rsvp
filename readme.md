@@ -1,16 +1,17 @@
-# Speed Reader
+# RSVP Reader
 
-A Node.js application that helps users speed read text by displaying words one at a time at adjustable speeds.
+A Node.js application that helps users speed read text using Rapid Serial Visual Presentation (RSVP).
 
-## Description
+## Live Demo
 
-Speed Reader takes text input and displays each word sequentially on the screen, allowing users to read content faster by eliminating the need for eye movement across lines of text. This technique, known as Rapid Serial Visual Presentation (RSVP), can help improve reading speed and comprehension.
+Visit [http://209.38.49.171:3000](http://209.38.49.171:3000)
 
 ## Features
 
 - Input any text or paragraph
-- Adjustable reading speed (words per minute)
-- Clean, distraction-free interface
-- Pause/Resume functionality
+- Adjustable reading speed (60-1000 WPM)
+- Word chunking for better comprehension
+- Adjustable focus point size
+- Smart delays for punctuation and longer words
+- Keyboard controls (Space, Esc, ↑/↓)
 - Progress indicator
-  z
