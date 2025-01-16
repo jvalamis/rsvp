@@ -1,0 +1,78 @@
+name: Deploy RSVP Reader
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  actions: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup Docker Environment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            echo "Starting Docker environment cleanup..."
+            # Stop and remove existing container
+            docker stop rsvp-reader || true
+            docker rm rsvp-reader || true
+            # Remove the image
+            docker rmi ghcr.io/${{ github.repository_owner }}/rsvp-reader:latest || true
+            # Cleanup unused images
+            docker image prune -f
+            echo "Cleanup complete."
+
+  deploy:
+    needs: cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/rsvp-reader:latest
+
+      - name: Deploy to DigitalOcean
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -x
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+
+            # Pull and run the container
+            docker pull ghcr.io/${{ github.repository_owner }}/rsvp-reader:latest
+            docker run -d \
+              --name rsvp-reader \
+              -p 3000:3000 \
+              --restart always \
+              --log-driver json-file \
+              --log-opt max-size=10m \
+              --log-opt max-file=1 \
+              ghcr.io/${{ github.repository_owner }}/rsvp-reader:latest
