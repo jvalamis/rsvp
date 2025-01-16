@@ -4,7 +4,7 @@ A Node.js application that helps users speed read text using Rapid Serial Visual
 
 ## Live Demo
 
-Visit [http://209.38.49.171:3000](http://209.38.49.171:3000)
+Visit [http://45.55.77.172:3000](http://45.55.77.172:3000)
 
 ## Features
 
