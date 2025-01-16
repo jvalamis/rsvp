@@ -1,25 +1,12 @@
 {
-  "name": "speed-reader",
+  "name": "rsvp-reader",
   "version": "1.0.0",
-  "description": "A Node.js application for speed reading text",
+  "description": "RSVP (Rapid Serial Visual Presentation) reader application",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
-  "keywords": [
-    "speed-reading",
-    "rsvp",
-    "text",
-    "reading"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.3"
   }
 }
