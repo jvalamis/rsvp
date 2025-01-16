@@ -13,3 +13,4 @@ Speed Reader takes text input and displays each word sequentially on the screen,
 - Clean, distraction-free interface
 - Pause/Resume functionality
 - Progress indicator
+  z
