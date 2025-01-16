@@ -8,6 +8,88 @@ document.addEventListener("DOMContentLoaded", () => {
   const progress = document.getElementById("progress");
   const inputSection = document.querySelector(".input-section");
   const readerSection = document.querySelector(".reader-section");
+  const sightWordsBtn = document.getElementById("sightWordsBtn");
+  const firstGradeBtn = document.getElementById("firstGradeBtn");
+  const sightWords = `a
+and
+away
+big
+blue
+can
+come
+down
+find
+for
+funny
+go
+help
+here
+I
+in
+is
+it
+jump
+little
+look
+make
+me
+my
+not
+one
+play
+red
+run
+said
+see
+the
+three
+to
+two
+up
+we
+where
+yellow
+you`;
+  const firstGradeWords = `after
+again
+an
+any
+as
+ask
+by
+could
+every
+fly
+from
+give
+going
+had
+has
+her
+him
+his
+how
+just
+know
+let
+live
+may
+of
+old
+once
+open
+over
+put
+round
+some
+stop
+take
+thank
+them
+then
+think
+walk
+were`;
 
   let words = [];
   let currentIndex = 0;
@@ -56,6 +138,36 @@ document.addEventListener("DOMContentLoaded", () => {
   startBtn.addEventListener("click", startReading);
   pauseBtn.addEventListener("click", togglePause);
   stopBtn.addEventListener("click", stopReading);
+  sightWordsBtn.addEventListener("click", () => {
+    textInput.value = sightWords;
+    // Optional: Provide feedback that words were loaded
+    sightWordsBtn.innerHTML = `
+        <span>✓ Words Loaded</span>
+        <small class="button-description">Click Start Reading to begin</small>
+    `;
+    setTimeout(() => {
+      sightWordsBtn.innerHTML = `
+            <span>Kindergarten Dolch Sight Words</span>
+            <small class="button-description">40 essential words for practice</small>
+        `;
+    }, 2000);
+  });
+
+  // Add event listener for first grade words
+  firstGradeBtn.addEventListener("click", () => {
+    textInput.value = firstGradeWords;
+    // Provide feedback
+    firstGradeBtn.innerHTML = `
+        <span>✓ Words Loaded</span>
+        <small class="button-description">Click Start Reading to begin</small>
+    `;
+    setTimeout(() => {
+      firstGradeBtn.innerHTML = `
+            <span>First Grade Dolch Sight Words</span>
+            <small class="button-description">40 advanced words for practice</small>
+        `;
+    }, 2000);
+  });
 
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
