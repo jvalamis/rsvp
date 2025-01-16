@@ -5,6 +5,33 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif; /* Better Windows font fallbacks */
+}
+
+/* Ensure consistent font rendering */
+@supports (-webkit-overflow-scrolling: touch) {
+  /* iOS-specific styles */
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+@supports (-ms-ime-align: auto) {
+  /* Edge-specific styles */
+  body {
+    text-size-adjust: 100%;
+  }
+}
+
+/* Force hardware acceleration for smoother animations */
+.word-display {
+  -webkit-transform: translateZ(0);
+  -moz-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  -o-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 :root {
@@ -443,5 +470,16 @@ button {
   :root {
     --bg-color: #000;
     --surface-color: #1a1a1a;
+  }
+}
+
+/* Windows high-contrast mode support */
+@media screen and (-ms-high-contrast: active) {
+  :root {
+    --bg-color: Window;
+    --text-color: WindowText;
+    --primary-color: Highlight;
+    --accent-color: Highlight;
+    --surface-color: Canvas;
   }
 }
