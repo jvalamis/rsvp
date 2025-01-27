@@ -1,0 +1,30 @@
+name: rsvp_reader
+description: RSVP (Rapid Serial Visual Presentation) reader application
+
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  google_fonts: ^6.1.0
+  shelf: ^1.4.1
+  shelf_static: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/crimeandpunishment.txt
+    - assets/kindergarten.txt
+    - assets/firstgrade.txt
+    - assets/test.txt

@@ -1,20 +1,22 @@
-# Use Node.js LTS (Long Term Support) as base image
-FROM node:20-slim
+# Use official Dart image as base
+FROM dart:stable AS build
 
-# Create app directory
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install Flutter
+RUN git clone https://github.com/flutter/flutter.git -b stable /flutter
+ENV PATH="/flutter/bin:$PATH"
 
-# Install dependencies
-RUN npm install
-
-# Copy app source
+# Copy files
 COPY . .
 
-# Expose port
-EXPOSE 3000
+# Get dependencies
+RUN flutter pub get
 
-# Start the app
-CMD [ "npm", "start" ] 
+# Build web
+RUN flutter build web
+
+# Serve using Dart
+EXPOSE 3000
+CMD ["dart", "run", "bin/server.dart"] 

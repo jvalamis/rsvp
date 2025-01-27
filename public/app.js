@@ -96,7 +96,6 @@ were`;
   let currentTimeout = null;
   let isPaused = false;
   let settings = {
-    chunkSize: 1, // Words to show at once
     focusScale: 1, // Scale of the focus point
     minDelay: 100, // Minimum delay between words
     punctuationDelay: 1.5,
@@ -104,35 +103,19 @@ were`;
     sentenceEndDelay: 2.0,
   };
 
-  // Add new controls to HTML
-  const controlsHTML = `
-    <div class="advanced-controls">
-      <label>
-        Chunk Size:
-        <input type="range" id="chunkSize" min="1" max="3" value="1">
-        <span id="chunkSizeValue">1</span>
-      </label>
-      <label>
-        Focus Size:
-        <input type="range" id="focusScale" min="0.8" max="1.5" step="0.1" value="1">
-        <span id="focusScaleValue">1</span>
-      </label>
-    </div>
-  `;
-  document
-    .querySelector(".controls")
-    .insertAdjacentHTML("beforeend", controlsHTML);
-
   // Add settings event listeners
-  document.getElementById("chunkSize").addEventListener("input", (e) => {
-    settings.chunkSize = parseInt(e.target.value);
-    document.getElementById("chunkSizeValue").textContent = e.target.value;
-  });
-
   document.getElementById("focusScale").addEventListener("input", (e) => {
-    settings.focusScale = parseFloat(e.target.value);
-    document.getElementById("focusScaleValue").textContent = e.target.value;
-    document.documentElement.style.setProperty("--focus-scale", e.target.value);
+    const value = parseFloat(e.target.value);
+    settings.focusScale = value;
+    document.getElementById("focusScaleValue").textContent = value.toFixed(1);
+
+    // Update CSS variable for the pivot letter size
+    document.documentElement.style.setProperty("--focus-scale", value);
+
+    // If we're currently reading, update the word display
+    if (currentWord.innerHTML !== "Ready") {
+      updateWord();
+    }
   });
 
   startBtn.addEventListener("click", startReading);
@@ -201,23 +184,7 @@ were`;
   }
 
   function getWordChunk(startIndex) {
-    const chunk = [];
-    let i = startIndex;
-    let chunkLength = 0;
-
-    while (i < words.length && chunkLength < settings.chunkSize) {
-      const word = words[i];
-      if (/[.,!?;]/.test(word)) {
-        if (chunk.length > 0) break;
-        chunk.push(word);
-        break;
-      }
-      chunk.push(word);
-      chunkLength++;
-      i++;
-    }
-
-    return chunk;
+    return [words[startIndex]];
   }
 
   function getDelayForChunk(chunk) {
@@ -243,19 +210,18 @@ were`;
       return chunk[0];
     }
 
-    const totalLength = chunk.join(" ").length;
-    const pivotIndex = Math.floor(chunk.length / 2);
-
     return chunk
-      .map((word, i) => {
-        if (i === pivotIndex) {
-          const pivot = findOptimalPivot(word);
-          const before = word.slice(0, pivot);
-          const pivotLetter = word[pivot];
-          const after = word.slice(pivot + 1);
-          return `<span class="before">${before}</span><span class="pivot">${pivotLetter}</span><span class="after">${after}</span>`;
-        }
-        return `<span class="peripheral">${word}</span>`;
+      .map((word) => {
+        const pivot = findOptimalPivot(word);
+        const before = word.slice(0, pivot);
+        const pivotLetter = word[pivot];
+        const after = word.slice(pivot + 1);
+
+        return `
+          <span class="before">${before}</span>
+          <span class="pivot" style="font-size: ${settings.focusScale}em">${pivotLetter}</span>
+          <span class="after">${after}</span>
+        `;
       })
       .join(" ");
   }
