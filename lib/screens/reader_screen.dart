@@ -578,13 +578,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildReaderView(bool isSmallScreen) {
-    return GestureDetector(  // Add swipe support
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity! > 0) {
-          // Swipe right - go to previous word
+    return GestureDetector(
+      onTapUp: (TapUpDetails details) {
+        if (!_isReading) return;
+        
+        final screenWidth = MediaQuery.of(context).size.width;
+        final tapX = details.globalPosition.dx;
+        
+        if (tapX < screenWidth / 2) {
+          // Left side tap - go back
           _processor?.previousWord();
-        } else if (details.primaryVelocity! < 0) {
-          // Swipe left - go to next word
+        } else {
+          // Right side tap - go forward
           _processor?.nextWord();
         }
       },
