@@ -7,6 +7,7 @@ import '../models/word_processor.dart';
 import '../models/settings.dart';  // Add this for settings
 import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
+import 'dart:async';
 
 const double kMaxContentWidth = 800.0;
 
@@ -31,6 +32,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
   bool _isPaused = false;
   String _loadingMessage = '';
   bool _showLoadingOverlay = false;
+  bool _showMobileInstructions = false;
+  Timer? _instructionTimer;
 
   @override
   void initState() {
@@ -38,7 +41,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _wpmController.text = _wpm.toString();  // Initialize WPM controller
   }
 
-  void _startReading() async {
+  void _startReading(bool isSmallScreen) async {
     if (_textController.text.isEmpty) return;
     
     setState(() {
@@ -65,6 +68,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
       });
       _processor!.start();
       _keyboardFocusNode.requestFocus();
+      if (isSmallScreen) {
+        _showInstructionsTemporarily();
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -200,6 +206,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
+  void _showInstructionsTemporarily() {
+    setState(() => _showMobileInstructions = true);
+    _instructionTimer?.cancel();
+    _instructionTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() => _showMobileInstructions = false);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _textController.dispose();
@@ -207,6 +223,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _keyboardFocusNode.dispose();  // Add this
     _processor?.dispose();
     _processor = null;
+    _instructionTimer?.cancel();
     super.dispose();
   }
 
@@ -257,21 +274,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Speed Read Any Text',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      'Start Your Speed Reading Journey',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Train your brain to read up to 1000 words per minute',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                        letterSpacing: -0.5,
+                      'Enter text, paste from clipboard, or choose from our collection',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -304,11 +317,29 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 color: Theme.of(context).colorScheme.secondary,
                               ),
                               const SizedBox(width: 12),
-                              Text(
-                                'Your Text',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Paste Your Text',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Copy and paste any text you want to speed read',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              IconButton.outlined(
+                                onPressed: _handlePaste,
+                                icon: const Icon(Icons.paste_rounded),
+                                tooltip: 'Paste from clipboard',
                               ),
                             ],
                           ),
@@ -320,7 +351,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             onChanged: _handleTextChange,
                             style: Theme.of(context).textTheme.bodyLarge,
                             decoration: InputDecoration(
-                              hintText: 'Paste your text here or choose a sample below...',
+                              hintText: 'Or choose from our reading materials above...',
                               filled: true,
                               fillColor: Theme.of(context).colorScheme.surface,
                               border: OutlineInputBorder(
@@ -341,101 +372,215 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     // Controls toolbar
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          // WPM Controls
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton.filled(
-                                onPressed: () {
-                                  setState(() {
-                                    _wpm = math.max(60, _wpm - 50);
-                                    _wpmController.text = _wpm.toString();
-                                  });
-                                },
-                                icon: const Icon(Icons.remove_rounded, size: 20),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                  foregroundColor: Theme.of(context).colorScheme.primary,
-                                  padding: const EdgeInsets.all(8),
-                                ),
-                              ),
-                              Container(
-                                width: 100,
-                                margin: const EdgeInsets.symmetric(horizontal: 8),
-                                child: TextField(
-                                  controller: _wpmController,
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: -0.5,
-                                  ),
-                                  decoration: InputDecoration(
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                    suffixText: 'WPM',
-                                    suffixStyle: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
-                                    border: InputBorder.none,
-                                  ),
-                                  onChanged: (value) {
-                                    final newWpm = int.tryParse(value);
-                                    if (newWpm != null) {
-                                      setState(() {
-                                        _wpm = math.min(math.max(newWpm, 60), 1000);
-                                        if (_wpm != newWpm) {
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // If width is less than 600, use vertical layout
+                          if (constraints.maxWidth < 600) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // WPM Controls in a row
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton.filled(
+                                      onPressed: () {
+                                        setState(() {
+                                          _wpm = math.max(60, _wpm - 50);
                                           _wpmController.text = _wpm.toString();
-                                        }
-                                      });
-                                    }
-                                  },
+                                        });
+                                      },
+                                      icon: const Icon(Icons.remove_rounded, size: 20),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                        foregroundColor: Theme.of(context).colorScheme.primary,
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 100,
+                                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                                      child: TextField(
+                                        controller: _wpmController,
+                                        keyboardType: TextInputType.number,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: -0.5,
+                                        ),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          suffixText: 'WPM',
+                                          suffixStyle: TextStyle(
+                                            fontSize: 12,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                          border: InputBorder.none,
+                                        ),
+                                        onChanged: (value) {
+                                          final newWpm = int.tryParse(value);
+                                          if (newWpm != null) {
+                                            setState(() {
+                                              _wpm = math.min(math.max(newWpm, 60), 1000);
+                                              if (_wpm != newWpm) {
+                                                _wpmController.text = _wpm.toString();
+                                              }
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    IconButton.filled(
+                                      onPressed: () {
+                                        setState(() {
+                                          _wpm = math.min(1000, _wpm + 50);
+                                          _wpmController.text = _wpm.toString();
+                                        });
+                                      },
+                                      icon: const Icon(Icons.add_rounded, size: 20),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                        foregroundColor: Theme.of(context).colorScheme.primary,
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              IconButton.filled(
-                                onPressed: () {
-                                  setState(() {
-                                    _wpm = math.min(1000, _wpm + 50);
-                                    _wpmController.text = _wpm.toString();
-                                  });
-                                },
-                                icon: const Icon(Icons.add_rounded, size: 20),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                  foregroundColor: Theme.of(context).colorScheme.primary,
-                                  padding: const EdgeInsets.all(8),
+                                const SizedBox(height: 12),
+                                // Keyboard shortcuts
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.keyboard_rounded,
+                                      size: 16,
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Space: Pause • Esc: Stop • ↑↓: Speed',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
-                          // Keyboard shortcuts
-                          const Spacer(),
-                          Icon(
-                            Icons.keyboard_rounded,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Space: Pause • Esc: Stop • ↑↓: Speed',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Start Reading button
-                          FilledButton.icon(
-                            onPressed: _startReading,
-                            icon: const Icon(Icons.play_arrow_rounded),
-                            label: const Text('Start Reading'),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                          ),
-                        ],
+                                const SizedBox(height: 12),
+                                // Start Reading button
+                                FilledButton.icon(
+                                  onPressed: () => _startReading(isSmallScreen),
+                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  label: const Text('Start Reading'),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                ),
+                              ],
+                            );
+                          } else {
+                            // Original horizontal layout for wider screens
+                            return Row(
+                              children: [
+                                // WPM Controls
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton.filled(
+                                      onPressed: () {
+                                        setState(() {
+                                          _wpm = math.max(60, _wpm - 50);
+                                          _wpmController.text = _wpm.toString();
+                                        });
+                                      },
+                                      icon: const Icon(Icons.remove_rounded, size: 20),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                        foregroundColor: Theme.of(context).colorScheme.primary,
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 100,
+                                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                                      child: TextField(
+                                        controller: _wpmController,
+                                        keyboardType: TextInputType.number,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: -0.5,
+                                        ),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          suffixText: 'WPM',
+                                          suffixStyle: TextStyle(
+                                            fontSize: 12,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                          border: InputBorder.none,
+                                        ),
+                                        onChanged: (value) {
+                                          final newWpm = int.tryParse(value);
+                                          if (newWpm != null) {
+                                            setState(() {
+                                              _wpm = math.min(math.max(newWpm, 60), 1000);
+                                              if (_wpm != newWpm) {
+                                                _wpmController.text = _wpm.toString();
+                                              }
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    IconButton.filled(
+                                      onPressed: () {
+                                        setState(() {
+                                          _wpm = math.min(1000, _wpm + 50);
+                                          _wpmController.text = _wpm.toString();
+                                        });
+                                      },
+                                      icon: const Icon(Icons.add_rounded, size: 20),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                        foregroundColor: Theme.of(context).colorScheme.primary,
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Keyboard shortcuts
+                                const Spacer(),
+                                Icon(
+                                  Icons.keyboard_rounded,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Space: Pause • Esc: Stop • ↑↓: Speed',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                // Start Reading button
+                                FilledButton.icon(
+                                  onPressed: () => _startReading(isSmallScreen),
+                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  label: const Text('Start Reading'),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                        },
                       ),
                     ),
                   ],
@@ -449,103 +594,295 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildReaderView(bool isSmallScreen) {
-    return Container(
-      color: Colors.black.withOpacity(0.8),
-      child: Stack(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              WordDisplay(
-                word: _currentWord,
-                focusScale: settings.focusScale,
-              ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton.filled(
-                    onPressed: () {
-                      setState(() {
-                        _wpm = math.max(60, _wpm - 50);
-                        _wpmController.text = _wpm.toString();
-                      });
-                      _processor?.updateWPM(_wpm);
-                    },
-                    icon: const Icon(Icons.remove_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$_wpm WPM',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton.filled(
-                    onPressed: () {
-                      setState(() {
-                        _wpm = math.min(1000, _wpm + 50);
-                        _wpmController.text = _wpm.toString();
-                      });
-                      _processor?.updateWPM(_wpm);
-                    },
-                    icon: const Icon(Icons.add_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ControlsPanel(
-                progress: _progress,
-                isPaused: _isPaused,
-                onPause: _togglePause,
-                onStop: _stopReading,
-              ),
-            ],
-          ),
-          // Keyboard shortcuts hint at bottom
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 16,
-            child: Column(
+    return GestureDetector(  // Add swipe support
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity! > 0) {
+          // Swipe right - go to previous word
+          _processor?.previousWord();
+        } else if (details.primaryVelocity! < 0) {
+          // Swipe left - go to next word
+          _processor?.nextWord();
+        }
+      },
+      onTap: isSmallScreen ? () => _showInstructionsTemporarily() : null,
+      child: Container(
+        color: Colors.black.withOpacity(0.8),
+        child: Stack(
+          children: [
+            // Main content
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Space: Pause/Resume | Esc: Stop | ↑↓: Speed | ←→: Navigate Words',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 12,
-                  ),
+                WordDisplay(
+                  word: _currentWord,
+                  focusScale: settings.focusScale,
                 ),
-                Text(
-                  'Current Speed: $_wpm WPM',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 12,
+                const SizedBox(height: 32),
+                if (!isSmallScreen)  // Only show WPM controls here on desktop
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton.filled(
+                        onPressed: () {
+                          setState(() {
+                            _wpm = math.max(60, _wpm - 50);
+                            _wpmController.text = _wpm.toString();
+                          });
+                          _processor?.updateWPM(_wpm);
+                        },
+                        icon: const Icon(Icons.remove_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$_wpm WPM',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton.filled(
+                        onPressed: () {
+                          setState(() {
+                            _wpm = math.min(1000, _wpm + 50);
+                            _wpmController.text = _wpm.toString();
+                          });
+                          _processor?.updateWPM(_wpm);
+                        },
+                        icon: const Icon(Icons.add_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
+                const SizedBox(height: 16),
+                ControlsPanel(
+                  progress: _progress,
+                  isPaused: _isPaused,
+                  onPause: _togglePause,
+                  onStop: _stopReading,
                 ),
               ],
             ),
-          ),
-        ],
+
+            // Mobile controls overlay
+            if (isSmallScreen)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.8),
+                        Colors.black.withOpacity(0),
+                      ],
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        // WPM display and controls for mobile
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton.filled(
+                              onPressed: () {
+                                setState(() {
+                                  _wpm = math.max(60, _wpm - 50);
+                                  _wpmController.text = _wpm.toString();
+                                });
+                                _processor?.updateWPM(_wpm);
+                              },
+                              icon: const Icon(Icons.remove_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$_wpm WPM',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: () {
+                                setState(() {
+                                  _wpm = math.min(1000, _wpm + 50);
+                                  _wpmController.text = _wpm.toString();
+                                });
+                                _processor?.updateWPM(_wpm);
+                              },
+                              icon: const Icon(Icons.add_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Navigation controls
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            IconButton.filled(
+                              onPressed: () => _processor?.previousWord(),
+                              icon: const Icon(Icons.skip_previous_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: _togglePause,
+                              icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.all(16),
+                                iconSize: 32,
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: _stopReading,
+                              icon: const Icon(Icons.stop_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: () => _processor?.nextWord(),
+                              icon: const Icon(Icons.skip_next_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            // Show keyboard hints only on desktop
+            if (!isSmallScreen)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 16,
+                child: Column(
+                  children: [
+                    Text(
+                      'Space: Pause/Resume | Esc: Stop | ↑↓: Speed | ←→: Navigate Words',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      'Current Speed: $_wpm WPM',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Mobile instructions overlay
+            if (isSmallScreen)
+              AnimatedOpacity(
+                opacity: _showMobileInstructions ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  color: Colors.black.withOpacity(0.7),
+                  child: Center(
+                    child: Card(
+                      color: Colors.white.withOpacity(0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.touch_app_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Reader Controls',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _InstructionRow(
+                              icon: Icons.swipe,
+                              text: 'Swipe left/right to navigate words',
+                            ),
+                            const SizedBox(height: 8),
+                            _InstructionRow(
+                              icon: Icons.speed,
+                              text: 'Adjust speed with + / - buttons',
+                            ),
+                            const SizedBox(height: 8),
+                            _InstructionRow(
+                              icon: Icons.play_circle_filled_rounded,
+                              text: 'Play/Pause with center button',
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Tap anywhere to dismiss',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -597,5 +934,34 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return 'Max: 1000 WPM';
     }
     return null;
+  }
+}
+
+// Helper widget for instruction rows
+class _InstructionRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InstructionRow({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.white, size: 20),
+        const SizedBox(width: 12),
+        Text(
+          text,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
   }
 } 

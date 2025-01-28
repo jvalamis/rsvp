@@ -79,10 +79,12 @@ class _WordListsState extends State<WordLists> {
                       ],
                     ),
                     children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
+                      Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Row(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.start,
                           children: [
                             _SampleTextCard(
                               title: 'Crime and Punishment',
@@ -94,7 +96,6 @@ class _WordListsState extends State<WordLists> {
                               },
                               color: Theme.of(context).colorScheme.primaryContainer,
                             ),
-                            const SizedBox(width: 8),
                           ],
                         ),
                       ),
@@ -131,14 +132,16 @@ class _WordListsState extends State<WordLists> {
                       ],
                     ),
                     children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
+                      Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Row(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.start,
                           children: [
                             _SampleTextCard(
                               title: 'Kindergarten Words',
-                              description: '52 essential sight words',
+                              description: '40 essential sight words',
                               icon: Icons.child_care,
                               onTap: () async {
                                 final text = await rootBundle.loadString('assets/kindergarten.txt');
@@ -146,16 +149,25 @@ class _WordListsState extends State<WordLists> {
                               },
                               color: Theme.of(context).colorScheme.tertiaryContainer,
                             ),
-                            const SizedBox(width: 8),
                             _SampleTextCard(
                               title: 'First Grade Words',
-                              description: '31 additional sight words',
-                              icon: Icons.school,
+                              description: '49 additional sight words',
+                              icon: Icons.menu_book_rounded,
                               onTap: () async {
                                 final text = await rootBundle.loadString('assets/firstgrade.txt');
                                 widget.onWordListSelected(text);
                               },
-                              color: Theme.of(context).colorScheme.errorContainer,
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                            ),
+                            _SampleTextCard(
+                              title: 'Second Grade Words',
+                              description: '46 advanced sight words',
+                              icon: Icons.auto_stories_rounded,
+                              onTap: () async {
+                                final text = await rootBundle.loadString('assets/secondgrade.txt');
+                                widget.onWordListSelected(text);
+                              },
+                              color: Theme.of(context).colorScheme.secondaryContainer,
                             ),
                           ],
                         ),
@@ -193,10 +205,12 @@ class _WordListsState extends State<WordLists> {
                       ],
                     ),
                     children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
+                      Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Row(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.start,
                           children: [
                             _SampleTextCard(
                               title: 'Quick Test',
@@ -248,7 +262,10 @@ class _SampleTextCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          width: 280,
+          constraints: const BoxConstraints(
+            minWidth: 200,
+            maxWidth: 300,
+          ),
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
