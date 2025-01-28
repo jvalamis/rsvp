@@ -22,6 +22,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final TextEditingController _textController = TextEditingController();
   final TextEditingController _wpmController = TextEditingController();  // Add this
   final FocusNode _keyboardFocusNode = FocusNode();  // Add this
+  final ScrollController _scrollController = ScrollController();  // Add this
   final Settings settings = Settings();
   bool _isReading = false;
   bool _isLoading = false;
@@ -96,9 +97,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
-  // Update the _handleTextChange method
+  // Update _handleTextChange to scroll when text is entered
   Future<void> _handleTextChange(String text) async {
     _textController.text = text;
+    if (text.isNotEmpty) {
+      // Wait for next frame to ensure the UI has updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   // Update _handleTextSelected to properly handle loading states
@@ -141,13 +151,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  // Update paste callback
+  // Update _handlePaste to also trigger scrolling
   Future<void> _handlePaste() async {
     setState(() => _isLoading = true);
     try {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
       if (data?.text != null && data!.text!.isNotEmpty) {
-        _textController.text = data.text!;
+        await _handleTextChange(data.text!);  // Use _handleTextChange to handle scrolling
       }
     } finally {
       setState(() => _isLoading = false);
@@ -210,6 +220,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _textController.dispose();
     _wpmController.dispose();
     _keyboardFocusNode.dispose();
+    _scrollController.dispose();  // Add this
     _processor?.dispose();
     _processor = null;
     super.dispose();
@@ -249,6 +260,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Widget _buildInputView(bool isSmallScreen) {
     return Center(
       child: SingleChildScrollView(
+        controller: _scrollController,  // Add this
         padding: EdgeInsets.symmetric(
           horizontal: isSmallScreen ? 16 : 32,
           vertical: isSmallScreen ? 24 : 48,
@@ -612,7 +624,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   focusScale: settings.focusScale,
                 ),
                 const SizedBox(height: 32),
-                if (!isSmallScreen)  // Only show WPM controls here on desktop
+                // Only show WPM controls on desktop here
+                if (!isSmallScreen)  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -663,17 +676,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     ],
                   ),
                 const SizedBox(height: 16),
-                ControlsPanel(
-                  progress: _progress,
-                  isPaused: _isPaused,
-                  onPause: _togglePause,
-                  onStop: _stopReading,
-                  onRestart: _restartReading,
-                ),
+                // Only show ControlsPanel on desktop
+                if (!isSmallScreen)
+                  ControlsPanel(
+                    progress: _progress,
+                    isPaused: _isPaused,
+                    onPause: _togglePause,
+                    onStop: _stopReading,
+                    onRestart: _restartReading,
+                  ),
               ],
             ),
 
-            // Mobile controls overlay
+            // Show mobile controls only on small screens
             if (isSmallScreen)
               Positioned(
                 left: 0,
@@ -693,8 +708,47 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   ),
                   child: SafeArea(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // WPM controls at the top
+                        // Top row - Resume/Restart/Stop buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: _togglePause,
+                              icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                              label: Text(_isPaused ? 'Resume' : 'Pause'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: _restartReading,
+                              icon: const Icon(Icons.replay_rounded),
+                              label: const Text('Restart'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: _stopReading,
+                              icon: const Icon(Icons.stop_rounded),
+                              label: const Text('Stop'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[800],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Middle - WPM controls
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -708,16 +762,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               },
                               icon: const Icon(Icons.remove_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.1),
+                                backgroundColor: Colors.grey[800],
                                 foregroundColor: Colors.white,
+                                minimumSize: const Size(48, 48),
                               ),
                             ),
                             Container(
                               margin: const EdgeInsets.symmetric(horizontal: 16),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.grey[800],
+                                borderRadius: BorderRadius.circular(24),
                               ),
                               child: Text(
                                 '$_wpm WPM',
@@ -738,14 +793,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               },
                               icon: const Icon(Icons.add_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.1),
+                                backgroundColor: Colors.grey[800],
                                 foregroundColor: Colors.white,
+                                minimumSize: const Size(48, 48),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        // Simplified navigation controls
+                        const SizedBox(height: 24),
+                        
+                        // Bottom - Navigation controls
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -753,49 +810,28 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               onPressed: () => _processor?.previousWord(),
                               icon: const Icon(Icons.skip_previous_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.1),
+                                backgroundColor: Colors.grey[800],
                                 foregroundColor: Colors.white,
+                                minimumSize: const Size(48, 48),
                               ),
                             ),
                             IconButton.filled(
                               onPressed: _togglePause,
                               icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.2),
+                                backgroundColor: Colors.grey[800],
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.all(16),
-                                iconSize: 32,
+                                minimumSize: const Size(64, 64),
                               ),
                             ),
                             IconButton.filled(
                               onPressed: () => _processor?.nextWord(),
                               icon: const Icon(Icons.skip_next_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.1),
+                                backgroundColor: Colors.grey[800],
                                 foregroundColor: Colors.white,
-                              ),
-                            ),
-                            IconButton.filled(
-                              onPressed: _restartReading,
-                              icon: const Icon(Icons.replay_rounded),
-                              style: IconButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.9),
-                                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                                padding: const EdgeInsets.all(16),
-                                iconSize: 28,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            ),
-                            IconButton.filled(
-                              onPressed: _stopReading,
-                              icon: const Icon(Icons.stop_rounded),
-                              style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.all(16),
-                                iconSize: 32,
+                                minimumSize: const Size(48, 48),
                               ),
                             ),
                           ],
