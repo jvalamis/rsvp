@@ -1,0 +1,60 @@
+name: Version and Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for git operations
+
+      - name: Get commit count
+        id: get_version
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          echo "VERSION=1.0.${COMMIT_COUNT}" >> $GITHUB_ENV
+
+      - name: Update version files
+        run: |
+          # Update version.json
+          echo "{
+            \"version\": \"$VERSION\",
+            \"forceRefresh\": true
+          }" > web/version.json
+
+          # Update version in main.dart
+          sed -i "s/kCurrentVersion = \".*\"/kCurrentVersion = \"$VERSION\"/" lib/main.dart
+
+          # Update version in pubspec.yaml
+          sed -i "s/version: .*/version: $VERSION+$COMMIT_COUNT/" pubspec.yaml
+
+      - name: Commit version updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add web/version.json lib/main.dart pubspec.yaml
+          git commit -m "Auto update version to $VERSION" || echo "No changes to commit"
+          git push
+
+      # Add your deployment steps here
+      # For example, if using GitHub Pages:
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.16.0"
+          channel: "stable"
+
+      - name: Build Web
+        run: |
+          flutter pub get
+          flutter build web --release
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web

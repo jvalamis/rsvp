@@ -56,3 +56,6 @@ coverage/
 # Ensure dart tool directory is ignored
 .dart_tool/
 *.ldb
+
+# Add these lines
+web/version.json
