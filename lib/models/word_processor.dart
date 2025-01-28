@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
+
+const double kMinAnimationDuration = 0.05; // 50ms minimum duration
 
 class WordProcessor {
-  String text;
-  int wpm;
+  final String text;
+  int _wpm;  // Make it private
   final Function(String) onWord;
   final Function(double) onProgress;
   final Function() onComplete;
@@ -11,17 +14,20 @@ class WordProcessor {
   List<String> _words = [];
   int _currentIndex = 0;
   bool _isInitialized = false;
+  Duration _wordDuration = Duration.zero;
 
   WordProcessor({
     required this.text,
-    required this.wpm,
+    required int wpm,  // Change parameter name
     required this.onWord,
     required this.onProgress,
     required this.onComplete,
-  }) {
-    // Improved tokenization
+  }) : _wpm = wpm {  // Initialize private _wpm
     _words = _tokenize(text);
   }
+
+  // Add getter for wpm if needed
+  int get wpm => _wpm;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -100,8 +106,8 @@ class WordProcessor {
   }
 
   int _getDelayForWord(String word) {
-    final baseDelay = 60000 ~/ wpm;  // Convert WPM to milliseconds
-    print('WordProcessor: Base delay for $wpm WPM: $baseDelay ms');
+    final baseDelay = 60000 ~/ _wpm;  // Use _wpm here
+    print('WordProcessor: Base delay for $_wpm WPM: $baseDelay ms');
     
     if (RegExp(r'[.!?]$').hasMatch(word)) {
       return (baseDelay * 2).toInt();
@@ -124,16 +130,22 @@ class WordProcessor {
     _scheduleNextWord();
   }
 
-  void updateWPM(int newWPM) {
-    print('WordProcessor: Updating WPM from $wpm to $newWPM');
-    wpm = newWPM;
+  void updateWPM(int wpm) {
+    _wpm = wpm;
+    // Ensure we have a minimum animation duration even at high speeds
+    _wordDuration = Duration(
+      milliseconds: math.max(
+        (60000 / _wpm).round(),
+        (kMinAnimationDuration * 1000).round(),
+      ),
+    );
     
     // Always cancel and reschedule, even if paused
     _timer?.cancel();
     
     // If we're not paused, schedule next word with new speed
     if (!_isPaused) {
-      print('WordProcessor: Rescheduling with new WPM: $wpm');
+      print('WordProcessor: Rescheduling with new WPM: $_wpm');
       _scheduleNextWord();
     }
   }
@@ -151,7 +163,7 @@ class WordProcessor {
     onProgress(_currentIndex / _words.length);
 
     final delay = _getDelayForWord(word);
-    print('WordProcessor: Next word delay: $delay ms at $wpm WPM');
+    print('WordProcessor: Next word delay: $delay ms at $_wpm WPM');
     
     _timer?.cancel();
     _timer = Timer(Duration(milliseconds: delay), () {
