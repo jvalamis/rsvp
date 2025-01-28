@@ -52,3 +52,7 @@ coverage/
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Ensure dart tool directory is ignored
+.dart_tool/
+*.ldb
