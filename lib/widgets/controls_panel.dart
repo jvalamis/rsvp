@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class ControlsPanel extends StatelessWidget {
   final VoidCallback onStop;
+  final VoidCallback onRestart;
   final bool isPaused;
   final VoidCallback onPause;
   final double progress;
@@ -9,6 +10,7 @@ class ControlsPanel extends StatelessWidget {
   const ControlsPanel({
     super.key,
     required this.onStop,
+    required this.onRestart,
     required this.isPaused,
     required this.onPause,
     required this.progress,
@@ -33,6 +35,18 @@ class ControlsPanel extends StatelessWidget {
               label: Text(isPaused ? 'Resume' : 'Pause'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: onRestart,
+              icon: const Icon(Icons.replay_rounded),
+              label: const Text('Restart'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
             ),
             const SizedBox(width: 8),

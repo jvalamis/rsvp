@@ -666,6 +666,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   isPaused: _isPaused,
                   onPause: _togglePause,
                   onStop: _stopReading,
+                  onRestart: _restartReading,
                 ),
               ],
             ),
@@ -691,7 +692,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   child: SafeArea(
                     child: Column(
                       children: [
-                        // WPM display and controls for mobile
+                        // WPM controls at the top
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -742,7 +743,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        // Navigation controls
+                        // Simplified navigation controls
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -765,19 +766,34 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               ),
                             ),
                             IconButton.filled(
-                              onPressed: _stopReading,
-                              icon: const Icon(Icons.stop_rounded),
+                              onPressed: () => _processor?.nextWord(),
+                              icon: const Icon(Icons.skip_next_rounded),
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.white.withOpacity(0.1),
                                 foregroundColor: Colors.white,
                               ),
                             ),
                             IconButton.filled(
-                              onPressed: () => _processor?.nextWord(),
-                              icon: const Icon(Icons.skip_next_rounded),
+                              onPressed: _restartReading,
+                              icon: const Icon(Icons.replay_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.1),
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.9),
+                                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                                padding: const EdgeInsets.all(16),
+                                iconSize: 28,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: _stopReading,
+                              icon: const Icon(Icons.stop_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.2),
                                 foregroundColor: Colors.white,
+                                padding: const EdgeInsets.all(16),
+                                iconSize: 32,
                               ),
                             ),
                           ],
@@ -868,5 +884,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return 'Max: 1000 WPM';
     }
     return null;
+  }
+
+  void _restartReading() {
+    if (_processor == null) return;
+    _processor?.stop();
+    _processor?.dispose();
+    
+    // Start fresh with same text
+    _startReading(MediaQuery.of(context).size.width < 600);
   }
 } 
