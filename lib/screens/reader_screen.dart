@@ -43,12 +43,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
     if (_textController.text.isEmpty) return;
     
     setState(() {
-      _isLoading = true;
       _showLoadingOverlay = true;
       _loadingMessage = 'Preparing reader...';
     });
 
     try {
+      // Clean up any existing processor
+      _processor?.dispose();
+      
       _processor = WordProcessor(
         text: _textController.text,
         wpm: _wpm,
@@ -57,34 +59,36 @@ class _ReaderScreenState extends State<ReaderScreen> {
         onComplete: () => setState(() => _isReading = false),
       );
       
-      // Initialize but don't start automatically
       await _processor!.initialize();
       setState(() {
         _isReading = true;
-        _isPaused = true;  // Start paused
-        _progress = 0;
-        _currentWord = _processor?.peekCurrentWord() ?? '';  // Show first word
+        _isPaused = true;  // Set initial pause state
+        _currentWord = _processor?.peekCurrentWord() ?? '';
       });
+      
+      // Start paused
+      _processor!.togglePause(); // This puts it in paused state
       _keyboardFocusNode.requestFocus();
     } finally {
       setState(() {
-        _isLoading = false;
         _showLoadingOverlay = false;
       });
     }
   }
 
   void _togglePause() {
+    if (!_isReading || _processor == null) return;
     setState(() {
-      _isPaused = !_isPaused;
-      if (_processor != null) {
-        _processor!.togglePause();
-      }
+      _isPaused = !_isPaused;  // Toggle UI state
     });
+    _processor!.togglePause();  // Toggle processor state
   }
 
   void _stopReading() {
     _processor?.stop();
+    _processor?.dispose();
+    _processor = null;
+    
     setState(() {
       _isReading = false;
       _currentWord = '';

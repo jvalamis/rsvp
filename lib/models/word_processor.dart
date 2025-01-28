@@ -263,7 +263,6 @@ class WordProcessor {
   void stop() {
     _timer?.cancel();
     _currentIndex = 0;
-    _isPaused = false;
   }
 
   void dispose() {
