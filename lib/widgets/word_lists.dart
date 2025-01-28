@@ -88,13 +88,23 @@ class _WordListsState extends State<WordLists> {
                           children: [
                             _SampleTextCard(
                               title: 'Crime and Punishment',
-                              description: 'by Fyodor Dostoevsky',
+                              description: 'By Fyodor Dostoevsky',
                               icon: Icons.auto_stories,
                               onTap: () async {
                                 final text = await rootBundle.loadString('assets/crimeandpunishment.txt');
                                 widget.onWordListSelected(text);
                               },
                               color: Theme.of(context).colorScheme.primaryContainer,
+                            ),
+                            _SampleTextCard(
+                              title: 'Thus Spake Zarathustra',
+                              description: 'By Friedrich Nietzsche',
+                              icon: Icons.auto_stories,
+                              onTap: () async {
+                                final text = await rootBundle.loadString('assets/zarathustra.txt');
+                                widget.onWordListSelected(text);
+                              },
+                              color: Theme.of(context).colorScheme.secondaryContainer,
                             ),
                           ],
                         ),

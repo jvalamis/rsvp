@@ -793,7 +793,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Space: Pause/Resume | Esc: Stop | ↑↓: Speed | ←→: Navigate Words',
+                      'Space: Play/Pause | Esc: Stop | ↑↓: Speed | ←→: Navigate Words',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
