@@ -293,4 +293,9 @@ class WordProcessor {
       onProgress(_currentIndex / _words.length);
     }
   }
+
+  String peekCurrentWord() {
+    if (_words.isEmpty) return '';
+    return _words[_currentIndex];
+  }
 } 

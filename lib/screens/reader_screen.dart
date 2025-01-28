@@ -57,14 +57,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
         onComplete: () => setState(() => _isReading = false),
       );
       
-      // Initialize and start
+      // Initialize but don't start automatically
       await _processor!.initialize();
       setState(() {
         _isReading = true;
-        _isPaused = false;
+        _isPaused = true;  // Start paused
         _progress = 0;
+        _currentWord = _processor?.peekCurrentWord() ?? '';  // Show first word
       });
-      _processor!.start();
       _keyboardFocusNode.requestFocus();
     } finally {
       setState(() {
