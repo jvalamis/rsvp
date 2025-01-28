@@ -60,25 +60,93 @@ class WordProcessor {
     String currentWord = '';
     bool inAbbreviation = false;
 
+    // Patterns for abbreviations and place names
+    final placeNamePattern = RegExp(
+      r'[A-Z]\. (?:Place|Street|Road|Bridge|Ave|Boulevard|Square|Park|Building)',
+      caseSensitive: true,
+    );
+
+    final abbreviationPattern = RegExp(
+      r'\b(Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.|Sr\.|Jr\.|St\.|Ave\.|Rd\.|Blvd\.|Apt\.|'
+      r'[A-Z]\.|[A-Z]\.[A-Z]\.|[A-Z]\.[A-Z]\.[A-Z]\.)',
+      caseSensitive: true,
+    );
+
+    // Look-ahead function to check if this is part of a place name
+    bool isPlaceName(int index) {
+      if (index >= text.length - 2) return false;
+      String lookAhead = text.substring(index, math.min(index + 20, text.length));
+      return placeNamePattern.hasMatch(lookAhead);
+    }
+
     for (int i = 0; i < text.length; i++) {
       String char = text[i];
       String? nextChar = i < text.length - 1 ? text[i + 1] : null;
+      String? prevChar = i > 0 ? text[i - 1] : null;
 
-      // Handle abbreviations (e.g., "Mr.", "St.", "U.S.A.")
-      if (char == '.' && nextChar != null) {
-        if (nextChar.trim().isEmpty) {  // End of sentence
-          currentWord += char;
-          if (currentWord.isNotEmpty) words.add(currentWord.trim());
+      // First, check for single-letter place names (e.g., "K. Bridge")
+      if (prevChar == null && 
+          RegExp(r'[A-Z]').hasMatch(char) && 
+          nextChar == '.' && 
+          isPlaceName(i)) {
+        String lookAhead = text.substring(i, math.min(i + 20, text.length));
+        var match = placeNamePattern.firstMatch(lookAhead);
+        if (match != null) {
+          String placeName = match.group(0)!;
+          words.add(placeName);
+          i += placeName.length - 1;
           currentWord = '';
-          inAbbreviation = false;
-        } else {  // Part of abbreviation
+          continue;
+        }
+      }
+      // If we're at the start of a word and see a capital letter
+      else if ((prevChar?.trim().isEmpty ?? true) && 
+               RegExp(r'[A-Z]').hasMatch(char) && 
+               isPlaceName(i)) {
+        String lookAhead = text.substring(i, math.min(i + 20, text.length));
+        var match = placeNamePattern.firstMatch(lookAhead);
+        if (match != null) {
+          String placeName = match.group(0)!;
+          words.add(placeName);
+          i += placeName.length - 1;
+          currentWord = '';
+          continue;
+        }
+      }
+
+      // Handle abbreviations and periods
+      if (char == '.' && nextChar != null) {
+        String lookAhead = text.substring(i - 10 >= 0 ? i - 10 : 0, i + 1);
+        if (abbreviationPattern.hasMatch(lookAhead)) {
           currentWord += char;
           inAbbreviation = true;
           continue;
         }
+        
+        // Handle end of sentence
+        if (nextChar.trim().isEmpty || nextChar == "\"" || nextChar == "'") {
+          currentWord += char;
+          if (currentWord.isNotEmpty) words.add(currentWord.trim());
+          currentWord = '';
+          inAbbreviation = false;
+        } else {
+          currentWord += char;
+          inAbbreviation = true;
+        }
       }
       // Handle contractions and possessives
-      else if (char == "'" && nextChar != null && "sStTdDmMvVrRlL".contains(nextChar)) {
+      else if (char == "'" && nextChar != null && 
+               (RegExp(r'[sStTdDmMvVrRlL]').hasMatch(nextChar) || 
+                (nextChar == 'r' && prevChar == 'e'))) {
+        currentWord += char;
+        continue;
+      }
+      // Handle hyphenated words
+      else if (char == '-' && 
+              nextChar != null && 
+              prevChar != null &&
+              RegExp(r'[a-zA-Z]').hasMatch(nextChar) &&
+              RegExp(r'[a-zA-Z]').hasMatch(prevChar)) {
         currentWord += char;
         continue;
       }
@@ -91,6 +159,17 @@ class WordProcessor {
           currentWord += char;
         }
       }
+      // Handle numbers with decimals
+      else if (RegExp(r'[0-9]').hasMatch(char)) {
+        if (currentWord.isEmpty || RegExp(r'[0-9.]').hasMatch(currentWord)) {
+          currentWord += char;
+          continue;
+        }
+        if (currentWord.isNotEmpty) {
+          words.add(currentWord.trim());
+        }
+        currentWord = char;
+      }
       // Handle all other characters
       else {
         currentWord += char;
@@ -102,17 +181,17 @@ class WordProcessor {
       words.add(currentWord.trim());
     }
 
-    return words.where((w) => w.isNotEmpty).toList();
+    return words.where((w) => w.trim().isNotEmpty).map((w) => w.trim()).toList();
   }
 
   int _getDelayForWord(String word) {
-    final baseDelay = 60000 ~/ _wpm;  // Use _wpm here
+    final baseDelay = 60000 ~/ _wpm;
     print('WordProcessor: Base delay for $_wpm WPM: $baseDelay ms');
     
-    if (RegExp(r'[.!?]$').hasMatch(word)) {
+    if (RegExp(r'[.!?]\b').hasMatch(word)) {
       return (baseDelay * 2).toInt();
     }
-    if (RegExp(r'[,;]$').hasMatch(word)) {
+    if (RegExp(r'[,;]\b').hasMatch(word)) {
       return (baseDelay * 1.5).toInt();
     }
     if (word.length > 8) {
@@ -163,7 +242,7 @@ class WordProcessor {
     onProgress(_currentIndex / _words.length);
 
     final delay = _getDelayForWord(word);
-    print('WordProcessor: Next word delay: $delay ms at $_wpm WPM');
+    print("WordProcessor: Next word delay: $delay ms at $_wpm WPM");
     
     _timer?.cancel();
     _timer = Timer(Duration(milliseconds: delay), () {
