@@ -215,9 +215,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
     super.dispose();
   }
 
+  bool get _isSmallScreen => MediaQuery.of(context).size.width < 800;  // Increase threshold
+
   @override
   Widget build(BuildContext context) {
-    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final isSmallScreen = _isSmallScreen;  // Use the getter
 
     return RawKeyboardListener(
       focusNode: _keyboardFocusNode,
@@ -892,6 +894,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _processor?.dispose();
     
     // Start fresh with same text
-    _startReading(MediaQuery.of(context).size.width < 600);
+    _startReading(_isSmallScreen);  // Use the getter here too
   }
 } 
