@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/reader_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:html' as html;
 
 const String kCurrentVersion = "1.0.0";  // Update this when deploying new version
 
