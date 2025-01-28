@@ -32,8 +32,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   bool _isPaused = false;
   String _loadingMessage = '';
   bool _showLoadingOverlay = false;
-  bool _showMobileInstructions = false;
-  Timer? _instructionTimer;
 
   @override
   void initState() {
@@ -68,9 +66,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
       });
       _processor!.start();
       _keyboardFocusNode.requestFocus();
-      if (isSmallScreen) {
-        _showInstructionsTemporarily();
-      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -206,24 +201,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  void _showInstructionsTemporarily() {
-    setState(() => _showMobileInstructions = true);
-    _instructionTimer?.cancel();
-    _instructionTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() => _showMobileInstructions = false);
-      }
-    });
-  }
-
   @override
   void dispose() {
     _textController.dispose();
     _wpmController.dispose();
-    _keyboardFocusNode.dispose();  // Add this
+    _keyboardFocusNode.dispose();
     _processor?.dispose();
     _processor = null;
-    _instructionTimer?.cancel();
     super.dispose();
   }
 
@@ -604,7 +588,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
           _processor?.nextWord();
         }
       },
-      onTap: isSmallScreen ? () => _showInstructionsTemporarily() : null,
       child: Container(
         color: Colors.black.withOpacity(0.8),
         child: Stack(
@@ -823,64 +806,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   ],
                 ),
               ),
-
-            // Mobile instructions overlay
-            if (isSmallScreen)
-              AnimatedOpacity(
-                opacity: _showMobileInstructions ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: Container(
-                  color: Colors.black.withOpacity(0.7),
-                  child: Center(
-                    child: Card(
-                      color: Colors.white.withOpacity(0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.touch_app_rounded,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Reader Controls',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _InstructionRow(
-                              icon: Icons.swipe,
-                              text: 'Swipe left/right to navigate words',
-                            ),
-                            const SizedBox(height: 8),
-                            _InstructionRow(
-                              icon: Icons.speed,
-                              text: 'Adjust speed with + / - buttons',
-                            ),
-                            const SizedBox(height: 8),
-                            _InstructionRow(
-                              icon: Icons.play_circle_filled_rounded,
-                              text: 'Play/Pause with center button',
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Tap anywhere to dismiss',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -934,34 +859,5 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return 'Max: 1000 WPM';
     }
     return null;
-  }
-}
-
-// Helper widget for instruction rows
-class _InstructionRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _InstructionRow({
-    required this.icon,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: Colors.white, size: 20),
-        const SizedBox(width: 12),
-        Text(
-          text,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-          ),
-        ),
-      ],
-    );
   }
 } 
