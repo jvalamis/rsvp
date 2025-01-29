@@ -150,6 +150,16 @@ class _WordListsState extends State<WordLists> {
                           alignment: WrapAlignment.start,
                           children: [
                             _SampleTextCard(
+                              title: 'I Learn to Read Book 1',
+                              description: 'Basic reading practice',
+                              icon: Icons.child_care,
+                              onTap: () async {
+                                final text = await rootBundle.loadString('assets/ilearntoreadbook1.txt');
+                                widget.onWordListSelected(text);
+                              },
+                              color: Theme.of(context).colorScheme.tertiaryContainer,
+                            ),
+                            _SampleTextCard(
                               title: 'Kindergarten Words',
                               description: '40 essential sight words',
                               icon: Icons.child_care,

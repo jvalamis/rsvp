@@ -27,6 +27,7 @@ flutter:
   assets:
     - assets/crimeandpunishment.txt
     - assets/kindergarten.txt
+    - assets/ilearntoreadbook1.txt
     - assets/firstgrade.txt
     - assets/test.txt
     - assets/zarathustra.txt
