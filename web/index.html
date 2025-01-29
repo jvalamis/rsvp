@@ -41,7 +41,13 @@
 </head>
 
 <body>
-  <script src="main.dart.js" type="application/javascript"></script>
+  <script>
+    // Add version to main.dart.js for cache busting
+    var scriptTag = document.createElement('script');
+    scriptTag.src = 'main.dart.js?v=' + new Date().getTime();  // Use timestamp for guaranteed uniqueness
+    scriptTag.type = 'application/javascript';
+    document.body.appendChild(scriptTag);
+  </script>
 </body>
 
 </html>
