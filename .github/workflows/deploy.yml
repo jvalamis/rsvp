@@ -37,8 +37,8 @@ jobs:
           # Update version in main.dart
           sed -i "s/kCurrentVersion = \".*\"/kCurrentVersion = \"$VERSION\"/" lib/main.dart
 
-          # Update version in pubspec.yaml
-          sed -i "s/version: .*/version: $VERSION+$COMMIT_COUNT/" pubspec.yaml
+          # Update version in pubspec.yaml (fixed format)
+          sed -i "s/version: .*/version: $VERSION/" pubspec.yaml  # Removed the +$COMMIT_COUNT part
 
       - name: Commit version updates
         run: |
