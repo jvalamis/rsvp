@@ -88,8 +88,11 @@ jobs:
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
-            # Clean up old images and containers
-            docker system prune -af  # Remove all unused containers, networks, images
+            # More aggressive cleanup
+            docker stop $(docker ps -a -q) || true  # Stop all containers
+            docker rm $(docker ps -a -q) || true    # Remove all containers
+            docker rmi $(docker images -a -q) || true  # Remove all images
+            docker system prune -af --volumes        # Remove everything including volumes
 
             # Continue with deployment
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
