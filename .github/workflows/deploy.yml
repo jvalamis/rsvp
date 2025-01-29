@@ -88,6 +88,10 @@ jobs:
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
+            # Clean up old images and containers
+            docker system prune -af  # Remove all unused containers, networks, images
+
+            # Continue with deployment
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
             docker pull ghcr.io/${{ github.repository_owner }}/rsvp-reader:latest
             docker stop rsvp-reader || true
