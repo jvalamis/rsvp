@@ -33,6 +33,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   bool _isPaused = false;
   String _loadingMessage = '';
   bool _showLoadingOverlay = false;
+  final GlobalKey _startButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -111,7 +112,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  // Update _handleTextSelected to properly handle loading states
+  // Update _handleTextSelected to scroll after text is loaded
   Future<void> _handleTextSelected(String text) async {
     setState(() {
       _showLoadingOverlay = true;
@@ -126,24 +127,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
       
       _processor?.dispose();
       _processor = null;
+      _textController.text = text;
       
-      // For very large texts, show a determinate progress
-      if (text.length > 100000) {
-        // Set text in one go, but update progress for UI feedback
-        _textController.text = text;
-        
-        // Simulate progress for UI feedback
-        for (var i = 0; i <= 100; i += 10) {
-          setState(() {
-            _loadingMessage = 'Processing text... $i%';
-          });
-          await Future.delayed(const Duration(milliseconds: 16));
-        }
-      } else {
-        // For smaller texts, just set it directly
-        _textController.text = text;
+      // Add delay to ensure UI is updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      // Scroll to the button
+      final context = _startButtonKey.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
       }
-      
     } finally {
       setState(() {
         _showLoadingOverlay = false;
@@ -474,7 +471,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 const SizedBox(height: 12),
                                 // Start Reading button
                                 FilledButton.icon(
-                                  onPressed: () => _startReading(isSmallScreen),
+                                  key: _startButtonKey,
+                                  onPressed: _textController.text.isEmpty 
+                                    ? null 
+                                    : () => _startReading(isSmallScreen),
                                   icon: const Icon(Icons.play_arrow_rounded),
                                   label: const Text('Start Reading'),
                                   style: FilledButton.styleFrom(
@@ -572,7 +572,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 const SizedBox(width: 16),
                                 // Start Reading button
                                 FilledButton.icon(
-                                  onPressed: () => _startReading(isSmallScreen),
+                                  key: _startButtonKey,
+                                  onPressed: _textController.text.isEmpty 
+                                    ? null 
+                                    : () => _startReading(isSmallScreen),
                                   icon: const Icon(Icons.play_arrow_rounded),
                                   label: const Text('Start Reading'),
                                   style: FilledButton.styleFrom(
