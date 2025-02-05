@@ -10,14 +10,19 @@ void main() async {
 
   // Check if we're in production
   final isProduction = Platform.environment['FLUTTER_ENV'] == 'production';
+  print('Running in ${isProduction ? 'production' : 'development'} mode');
 
   // Create a cascade handler that will try both paths
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
       .addHandler((request) {
+        print('Incoming request: ${request.method} ${request.url.path}');
+        
         if (isProduction) {
+          print('Handling in production mode');
           // Production behavior - handle /rsvp path
           if (request.url.path.startsWith('rsvp')) {
+            print('Handling /rsvp request');
             // Strip /rsvp prefix and serve the file directly
             return staticHandler(
               shelf.Request(
@@ -31,14 +36,15 @@ void main() async {
           
           // Redirect root to /rsvp in production
           if (request.url.path.isEmpty || request.url.path == '/') {
+            print('Redirecting to /rsvp/');
             return shelf.Response.movedPermanently('/rsvp/');
           }
         }
 
-        // Local development - serve everything at root
+        print('Serving static file');
         return staticHandler(request);
       });
 
   final server = await io.serve(handler, '0.0.0.0', 3000);
-  print('Serving at http://${server.address.host}:${server.port}');
+  print('Serving at http://${server.address.host}:${server.port} in ${isProduction ? 'production' : 'development'} mode');
 } 
