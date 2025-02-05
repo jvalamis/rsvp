@@ -15,7 +15,7 @@ RUN flutter pub get
 
 # Now copy the rest and build
 COPY . .
-RUN flutter build web --release
+RUN flutter build web --release --base-href "/rsvp/"
 
 # Serve using Dart
 EXPOSE 3000
