@@ -18,11 +18,15 @@ void main() async {
         if (isProduction) {
           // Production behavior - handle /rsvp path
           if (request.url.path.startsWith('rsvp')) {
-            // Remove /rsvp from the path and serve the static content
-            final newPath = request.url.path.replaceFirst('rsvp', '');
-            final newUri = request.url.replace(path: newPath);
-            final newRequest = request.change(uri: newUri);
-            return staticHandler(newRequest);
+            // Strip /rsvp prefix and serve the file directly
+            return staticHandler(
+              shelf.Request(
+                request.method,
+                request.url.replace(path: request.url.path.replaceFirst('rsvp', '')),
+                headers: request.headers,
+                url: request.url.replace(path: request.url.path.replaceFirst('rsvp', '')),
+              ),
+            );
           }
           
           // Redirect root to /rsvp in production

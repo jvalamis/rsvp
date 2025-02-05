@@ -4,19 +4,18 @@ FROM dart:stable AS build
 # Set working directory
 WORKDIR /app
 
-# Install Flutter
-RUN git clone https://github.com/flutter/flutter.git -b stable /flutter
+# Install Flutter more efficiently
+RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /flutter
 ENV PATH="/flutter/bin:$PATH"
 ENV FLUTTER_ENV=production
 
-# Copy files
-COPY . .
-
-# Get dependencies
+# Copy only necessary files first
+COPY pubspec.* ./
 RUN flutter pub get
 
-# Build web
-RUN flutter build web
+# Now copy the rest and build
+COPY . .
+RUN flutter build web --release
 
 # Serve using Dart
 EXPOSE 3000
