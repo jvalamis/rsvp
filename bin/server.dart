@@ -16,28 +16,37 @@ void main() async {
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
       .addHandler((request) {
+        // Log full request details
+        print('Full request URL: ${request.requestedUri}');
+        print('Headers: ${request.headers}');
         print('Incoming request: ${request.method} ${request.url.path}');
         
         if (isProduction) {
           print('Handling in production mode');
-          // Production behavior - handle /rsvp path
-          if (request.url.path.startsWith('rsvp') || request.url.path.startsWith('/rsvp')) {
+          
+          // Handle both /rsvp and rsvp paths
+          final path = request.url.path;
+          if (path.startsWith('rsvp') || path.startsWith('/rsvp')) {
             print('Handling /rsvp request');
             // Create absolute URL for the new request
-            final newPath = request.url.path.replaceFirst(RegExp(r'^/?rsvp/?'), '');
-            final newUri = Uri.parse('http://localhost:3000/$newPath');
+            final newPath = path.replaceFirst(RegExp(r'^/?rsvp/?'), '');
+            final newUri = Uri.parse('http://${request.requestedUri.authority}/$newPath');
             
+            print('Serving file from path: $newPath');
             return staticHandler(
               shelf.Request(
                 request.method,
                 newUri,
                 headers: request.headers,
               ),
-            );
+            ).then((response) {
+              print('Response status: ${response.statusCode}');
+              return response;
+            });
           }
           
           // Redirect root to /rsvp in production
-          if (request.url.path.isEmpty || request.url.path == '/') {
+          if (path.isEmpty || path == '/') {
             print('Redirecting to /rsvp/');
             return shelf.Response.movedPermanently('/rsvp/');
           }
