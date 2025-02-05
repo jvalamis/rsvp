@@ -20,8 +20,9 @@ void main() async {
           if (request.url.path.startsWith('rsvp')) {
             // Remove /rsvp from the path and serve the static content
             final newPath = request.url.path.replaceFirst('rsvp', '');
-            final newUrl = request.url.replace(path: newPath);
-            final newRequest = request.change(url: newUrl);
+            // Use requestedUri instead of url
+            final newUri = request.requestedUri.replace(path: newPath);
+            final newRequest = request.change(requestedUri: newUri);
             return staticHandler(newRequest);
           }
           
