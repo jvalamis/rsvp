@@ -23,13 +23,15 @@ void main() async {
           // Production behavior - handle /rsvp path
           if (request.url.path.startsWith('rsvp') || request.url.path.startsWith('/rsvp')) {
             print('Handling /rsvp request');
-            // Strip /rsvp prefix and serve the file directly
+            // Create absolute URL for the new request
+            final newPath = request.url.path.replaceFirst(RegExp(r'^/?rsvp/?'), '');
+            final newUri = Uri.parse('http://localhost:3000/$newPath');
+            
             return staticHandler(
               shelf.Request(
                 request.method,
-                request.url.replace(path: request.url.path.replaceFirst('rsvp', '')),
+                newUri,
                 headers: request.headers,
-                url: request.url.replace(path: request.url.path.replaceFirst('rsvp', '')),
               ),
             );
           }
