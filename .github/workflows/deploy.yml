@@ -37,16 +37,8 @@ jobs:
           # Update version in main.dart
           sed -i "s/kCurrentVersion = \".*\"/kCurrentVersion = \"$VERSION\"/" lib/main.dart
 
-          # Update version in pubspec.yaml (fixed format)
-          sed -i "s/version: .*/version: $VERSION/" pubspec.yaml  # Removed the +$COMMIT_COUNT part
-
-      - name: Commit version updates
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add web/version.json lib/main.dart pubspec.yaml
-          git commit -m "Auto update version to $VERSION" || echo "No changes to commit"
-          git push
+          # Update version in pubspec.yaml
+          sed -i "s/version: .*/version: $VERSION/" pubspec.yaml
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
