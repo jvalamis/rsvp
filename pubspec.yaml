@@ -2,7 +2,7 @@ name: rsvp_reader
 description: RSVP (Rapid Serial Visual Presentation) reader application
 
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.41
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

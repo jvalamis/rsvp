@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:html' as html;
 
-const String kCurrentVersion = "1.0.0";  // Update this when deploying new version
+const String kCurrentVersion = "1.0.41";  // Update this when deploying new version
 
 void main() {
   runApp(const RsvpReaderApp());
