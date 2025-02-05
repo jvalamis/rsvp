@@ -20,7 +20,4 @@ RUN flutter build web
 
 # Serve using Dart
 EXPOSE 3000
-CMD ["dart", "run", "bin/server.dart"]
-
-# Add nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf 
+CMD ["dart", "run", "bin/server.dart"] 
