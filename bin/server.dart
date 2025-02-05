@@ -21,7 +21,7 @@ void main() async {
         if (isProduction) {
           print('Handling in production mode');
           // Production behavior - handle /rsvp path
-          if (request.url.path.startsWith('rsvp')) {
+          if (request.url.path.startsWith('rsvp') || request.url.path.startsWith('/rsvp')) {
             print('Handling /rsvp request');
             // Strip /rsvp prefix and serve the file directly
             return staticHandler(
