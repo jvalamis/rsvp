@@ -15,7 +15,7 @@ void main() async {
   // Create a cascade handler that will try both paths
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
-      .addHandler((request) {
+      .addHandler((request) async {
         // Log full request details
         print('Full request URL: ${request.requestedUri}');
         print('Headers: ${request.headers}');
@@ -33,16 +33,15 @@ void main() async {
             final newUri = Uri.parse('http://${request.requestedUri.authority}/$newPath');
             
             print('Serving file from path: $newPath');
-            return staticHandler(
+            final response = await staticHandler(
               shelf.Request(
                 request.method,
                 newUri,
                 headers: request.headers,
               ),
-            ).then((response) {
-              print('Response status: ${response.statusCode}');
-              return response;
-            });
+            );
+            print('Response status: ${response.statusCode}');
+            return response;
           }
           
           // Redirect root to /rsvp in production
