@@ -15,3 +15,4 @@ Visit [http://45.55.77.172:3000](http://45.55.77.172:3000)
 - Smart delays for punctuation and longer words
 - Keyboard controls (Space, Esc, ↑/↓)
 - Progress indicator
+- test
