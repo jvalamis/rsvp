@@ -28,11 +28,15 @@ void main() async {
           final path = request.url.path;
           if (path.startsWith('rsvp') || path.startsWith('/rsvp')) {
             print('Handling /rsvp request');
+            print('Original path: ${request.url.path}');
             // Create absolute URL for the new request
             final newPath = path.replaceFirst(RegExp(r'^/?rsvp/?'), '');
             final newUri = Uri.parse('http://${request.requestedUri.authority}/$newPath');
             
-            print('Serving file from path: $newPath');
+            print('New path after stripping rsvp: $newPath');
+            print('New URI: $newUri');
+            print('Static handler base directory: ${Directory.current.path}/build/web');
+            
             final response = await staticHandler(
               shelf.Request(
                 request.method,
@@ -41,6 +45,7 @@ void main() async {
               ),
             );
             print('Response status: ${response.statusCode}');
+            print('Response headers: ${response.headers}');
             return response;
           }
           
