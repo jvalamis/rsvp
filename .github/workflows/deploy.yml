@@ -58,7 +58,7 @@ jobs:
         run: flutter pub get
 
       - name: Build web
-        run: flutter build web
+        run: flutter build web --base-href "/rsvp/"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -101,7 +101,7 @@ jobs:
             docker rm rsvp-reader || true
             docker run -d \
               --name rsvp-reader \
-              -p 3000:3000 \
+              -p 80:3000 \
               --restart always \
               ghcr.io/${{ github.repository_owner }}/rsvp-reader:latest
 

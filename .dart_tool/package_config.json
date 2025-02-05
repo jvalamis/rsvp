@@ -350,10 +350,10 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-01-29T00:20:59.611480Z",
+  "generated": "2025-02-05T18:07:41.715411Z",
   "generator": "pub",
-  "generatorVersion": "3.6.1",
+  "generatorVersion": "3.6.2",
   "flutterRoot": "file:///usr/local/Caskroom/flutter/3.27.3/flutter",
-  "flutterVersion": "3.27.3",
+  "flutterVersion": "3.27.4",
   "pubCache": "file:///Users/janvincentalamis/.pub-cache"
 }
