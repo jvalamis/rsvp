@@ -1,20 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:rsvp_reader/models/word_processor.dart';
 
-class WordDisplay extends StatelessWidget {
+class WordDisplay extends StatefulWidget {
   final String word;
   final double focusScale;
+  final WordProcessor? processor;
 
   const WordDisplay({
     super.key,
     required this.word,
     this.focusScale = 1.0,
+    this.processor,
   });
+
+  @override
+  State<WordDisplay> createState() => _WordDisplayState();
+}
+
+class _WordDisplayState extends State<WordDisplay> with SingleTickerProviderStateMixin {
+  bool _showAnswer = false;
+  late AnimationController _controller;
+  late Animation<double> _fadeIn;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeIn = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(WordDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.word != widget.word) {
+      setState(() => _showAnswer = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isLandscape = size.width > size.height;
     final screenWidth = size.width;
+    
+    // Check if this is a math equation
+    final isMathEquation = widget.word.contains('=');
     
     // Dynamic sizing based on screen width
     final containerHeight = isLandscape 
@@ -30,10 +69,72 @@ class WordDisplay extends StatelessWidget {
             ? 48.0 
             : 64.0;
 
-    final pivotIndex = _findOptimalPivot(word);
-    final before = word.substring(0, pivotIndex);
-    final pivot = word[pivotIndex];
-    final after = word.substring(pivotIndex + 1);
+    if (isMathEquation) {
+      return GestureDetector(
+        onTap: () {
+          print('Tapped, current state: $_showAnswer');
+          if (_showAnswer) {
+            // If we're showing the answer, move to next equation
+            widget.processor?.nextWord();
+            setState(() => _showAnswer = false);  // Reset for next equation
+          } else {
+            // If showing equation, reveal answer
+            setState(() => _showAnswer = true);
+          }
+          print('New state: $_showAnswer');
+        },
+        child: Container(
+          height: containerHeight,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).shadowColor.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.05,
+                ),
+                child: _showAnswer
+                  ? Text(
+                      widget.processor?.getAnswer(widget.word) ?? '?',
+                      style: TextStyle(
+                        fontSize: baseFontSize * 2.4,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 12,
+                        height: 1.2,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    )
+                  : Text(
+                      widget.word,
+                      style: TextStyle(
+                        fontSize: baseFontSize * 1.6,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 8,
+                        height: 1.2,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final pivotIndex = _findOptimalPivot(widget.word);
+    final before = widget.word.substring(0, pivotIndex);
+    final pivot = widget.word[pivotIndex];
+    final after = widget.word.substring(pivotIndex + 1);
 
     return Container(
       height: containerHeight,
@@ -84,7 +185,7 @@ class WordDisplay extends StatelessWidget {
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w600,
-                          fontSize: baseFontSize * focusScale,
+                          fontSize: baseFontSize * widget.focusScale,
                         ),
                       ),
                       TextSpan(

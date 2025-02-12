@@ -1,0 +1,90 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d chrome --web-port=3001
+
+## exception
+
+RPCError: ext.flutter.profileWidgetBuilds: (-32603) Unexpected DWDS error for callServiceExtension: Unexpected error from chrome devtools:
+text: Uncaught (in promise)
+exception:
+  preview: null
+  description: null
+  type: string
+  value: Unexpected null value.
+attempted JS eval: `require("dart_sdk").developer.invokeExtension(
+    "ext.flutter.profileWidgetBuilds", JSON.stringify({}));
+`
+
+
+```
+#0      new _OutstandingRequest (package:vm_service/src/vm_service.dart:265:34)
+#1      VmService._call.<anonymous closure> (package:vm_service/src/vm_service.dart:1921:25)
+#2      VmService._call (package:vm_service/src/vm_service.dart:1933:8)
+#3      VmService.callServiceExtension (package:vm_service/src/vm_service.dart:1872:14)
+#4      FlutterVmService._checkedCallServiceExtension (package:flutter_tools/src/vmservice.dart:889:28)
+#5      FlutterVmService.invokeFlutterExtensionRpcRaw (package:flutter_tools/src/vmservice.dart:909:49)
+#6      FlutterVmService._flutterToggle (package:flutter_tools/src/vmservice.dart:699:41)
+#7      FlutterVmService.flutterToggleProfileWidgetBuilds (package:flutter_tools/src/vmservice.dart:734:9)
+#8      ResidentHandlers.debugToggleProfileWidgetBuilds (package:flutter_tools/src/resident_runner.dart:858:33)
+<asynchronous suspension>
+#9      TerminalHandler.processTerminalInput (package:flutter_tools/src/resident_runner.dart:1786:7)
+<asynchronous suspension>
+```
+
+## flutter doctor
+
+```
+[32m[✓][39m Flutter (Channel stable, 3.27.4, on macOS 14.5 23F79 darwin-x64, locale en-US)
+    [32m•[39m Flutter version 3.27.4 on channel stable at /usr/local/Caskroom/flutter/3.27.3/flutter
+    [32m•[39m Upstream repository https://github.com/flutter/flutter.git
+    [32m•[39m Framework revision d8a9f9a52e (12 days ago), 2025-01-31 16:07:18 -0500
+    [32m•[39m Engine revision 82bd5b7209
+    [32m•[39m Dart version 3.6.2
+    [32m•[39m DevTools version 2.40.3
+
+[31m[✗][39m Android toolchain - develop for Android devices
+    [31m✗[39m Unable to locate Android SDK.
+      Install Android Studio from: https://developer.android.com/studio/index.html
+      On first launch it will assist you in installing the Android SDK components.
+      (or visit https://flutter.dev/to/macos-android-setup for detailed instructions).
+      If the Android SDK has been installed to a custom location, please use
+      `flutter config --android-sdk` to update to that location.
+
+
+[31m[✗][39m Xcode - develop for iOS and macOS
+    [31m✗[39m Xcode installation is incomplete; a full installation is necessary for iOS and macOS development.
+      Download at: https://developer.apple.com/xcode/
+      Or install Xcode via the App Store.
+      Once installed, run:
+        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+        sudo xcodebuild -runFirstLaunch
+    [31m✗[39m CocoaPods not installed.
+        CocoaPods is a package manager for iOS or macOS platform code.
+        Without CocoaPods, plugins will not work on iOS or macOS.
+        For more info, see https://flutter.dev/to/platform-plugins
+      For installation instructions, see https://guides.cocoapods.org/using/getting-started.html#installation
+
+[32m[✓][39m Chrome - develop for the web
+    [32m•[39m Chrome at /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+
+[33m[!][39m Android Studio (not installed)
+    [32m•[39m Android Studio not found; download from https://developer.android.com/studio/index.html
+      (or visit https://flutter.dev/to/macos-android-setup for detailed instructions).
+
+[32m[✓][39m VS Code (version 1.92.0)
+    [32m•[39m VS Code at /Applications/Visual Studio Code.app/Contents
+    [32m•[39m Flutter extension can be installed from:
+      🔨 https://marketplace.visualstudio.com/items?itemName=Dart-Code.flutter
+
+[32m[✓][39m Connected device (2 available)
+    [32m•[39m macOS (desktop) • macos  • darwin-x64     • macOS 14.5 23F79 darwin-x64
+    [32m•[39m Chrome (web)    • chrome • web-javascript • Google Chrome 133.0.6943.54
+
+[32m[✓][39m Network resources
+    [32m•[39m All expected network resources are available.
+
+[33m![39m Doctor found issues in 3 categories.
+```

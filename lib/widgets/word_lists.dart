@@ -17,242 +17,284 @@ class _WordListsState extends State<WordLists> {
   bool _isExpanded = false;
   bool _isLiteratureExpanded = false;
   bool _isLearningExpanded = false;
-  bool _isPracticeExpanded = false;
+  bool _isMathExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: _isExpanded,
-        onExpansionChanged: (expanded) {
-          setState(() => _isExpanded = expanded);
-        },
-        title: Row(
-          children: [
-            Icon(
-              Icons.library_books_rounded,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Reading Materials',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
+    return Column(  // Wrap in Column to show multiple categories
+      children: [
+        // Math Materials Category
+        Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ExpansionTile(
+            initiallyExpanded: _isMathExpanded,
+            onExpansionChanged: (expanded) {
+              setState(() => _isMathExpanded = expanded);
+            },
+            title: Row(
               children: [
-                // Classic Literature section
-                Card(
-                  elevation: 0,
-                  color: Theme.of(context).colorScheme.surface,
-                  margin: EdgeInsets.zero,
-                  child: ExpansionTile(
-                    initiallyExpanded: _isLiteratureExpanded,
-                    onExpansionChanged: (expanded) {
-                      setState(() => _isLiteratureExpanded = expanded);
-                    },
-                    title: Row(
-                      children: [
-                        Icon(
-                          Icons.auto_stories,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Classic Literature',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.start,
-                          children: [
-                            _SampleTextCard(
-                              title: 'Crime and Punishment',
-                              description: 'By Fyodor Dostoevsky',
-                              icon: Icons.auto_stories,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/crimeandpunishment.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.primaryContainer,
-                            ),
-                            _SampleTextCard(
-                              title: 'Thus Spake Zarathustra',
-                              description: 'By Friedrich Nietzsche',
-                              icon: Icons.auto_stories,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/zarathustra.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.secondaryContainer,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                Icon(
+                  Icons.calculate_rounded,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                
-                const SizedBox(height: 8),
-                
-                // Learning Materials section
-                Card(
-                  elevation: 0,
-                  color: Theme.of(context).colorScheme.surface,
-                  margin: EdgeInsets.zero,
-                  child: ExpansionTile(
-                    initiallyExpanded: _isLearningExpanded,
-                    onExpansionChanged: (expanded) {
-                      setState(() => _isLearningExpanded = expanded);
-                    },
-                    title: Row(
-                      children: [
-                        Icon(
-                          Icons.school,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Learning Materials',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.start,
-                          children: [
-                            _SampleTextCard(
-                              title: 'I Learn to Read Book 1',
-                              description: 'Basic reading practice',
-                              icon: Icons.child_care,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/ilearntoreadbook1.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.tertiaryContainer,
-                            ),
-                            _SampleTextCard(
-                              title: 'Kindergarten Words',
-                              description: '40 essential sight words',
-                              icon: Icons.child_care,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/kindergarten.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.tertiaryContainer,
-                            ),
-                            _SampleTextCard(
-                              title: 'First Grade Words',
-                              description: '49 additional sight words',
-                              icon: Icons.menu_book_rounded,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/firstgrade.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.primaryContainer,
-                            ),
-                            _SampleTextCard(
-                              title: 'Second Grade Words',
-                              description: '46 advanced sight words',
-                              icon: Icons.auto_stories_rounded,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/secondgrade.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.secondaryContainer,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Practice section
-                Card(
-                  elevation: 0,
-                  color: Theme.of(context).colorScheme.surface,
-                  margin: EdgeInsets.zero,
-                  child: ExpansionTile(
-                    initiallyExpanded: _isPracticeExpanded,
-                    onExpansionChanged: (expanded) {
-                      setState(() => _isPracticeExpanded = expanded);
-                    },
-                    title: Row(
-                      children: [
-                        Icon(
-                          Icons.speed,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Practice',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.start,
-                          children: [
-                            _SampleTextCard(
-                              title: 'Quick Test',
-                              description: 'Short story to test the reader',
-                              icon: Icons.speed,
-                              onTap: () async {
-                                final text = await rootBundle.loadString('assets/test.txt');
-                                widget.onWordListSelected(text);
-                              },
-                              color: Theme.of(context).colorScheme.secondaryContainer,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 12),
+                Text(
+                  'Math Materials',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(
+                  children: [
+                    // Learning Materials subsection
+                    Card(
+                      elevation: 0,
+                      color: Theme.of(context).colorScheme.surface,
+                      margin: EdgeInsets.zero,
+                      child: ExpansionTile(
+                        initiallyExpanded: _isLearningExpanded,
+                        onExpansionChanged: (expanded) {
+                          setState(() => _isLearningExpanded = expanded);
+                        },
+                        title: Row(
+                          children: [
+                            Icon(
+                              Icons.school_rounded,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Learning Materials',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _SampleTextCard(
+                                  title: 'Kindergarten Addition',
+                                  description: 'Basic addition practice',
+                                  icon: Icons.add_circle_outline,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/kindergarten_addition.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                _SampleTextCard(
+                                  title: 'Kindergarten Subtraction',
+                                  description: 'Basic subtraction practice',
+                                  icon: Icons.remove_circle_outline,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/kindergarten_subtraction.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        
+        const SizedBox(height: 16),  // Add spacing between categories
+        
+        // Original Reading Materials Category
+        Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ExpansionTile(
+            initiallyExpanded: _isExpanded,
+            onExpansionChanged: (expanded) {
+              setState(() => _isExpanded = expanded);
+            },
+            title: Row(
+              children: [
+                Icon(
+                  Icons.library_books_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Reading Materials',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(
+                  children: [
+                    // Classic Literature section
+                    Card(
+                      elevation: 0,
+                      color: Theme.of(context).colorScheme.surface,
+                      margin: EdgeInsets.zero,
+                      child: ExpansionTile(
+                        initiallyExpanded: _isLiteratureExpanded,
+                        onExpansionChanged: (expanded) {
+                          setState(() => _isLiteratureExpanded = expanded);
+                        },
+                        title: Row(
+                          children: [
+                            Icon(
+                              Icons.auto_stories,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Classic Literature',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.start,
+                              children: [
+                                _SampleTextCard(
+                                  title: 'Crime and Punishment',
+                                  description: 'By Fyodor Dostoevsky',
+                                  icon: Icons.auto_stories,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/crimeandpunishment.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                ),
+                                _SampleTextCard(
+                                  title: 'Thus Spake Zarathustra',
+                                  description: 'By Friedrich Nietzsche',
+                                  icon: Icons.auto_stories,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/zarathustra.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.secondaryContainer,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Learning Materials section
+                    Card(
+                      elevation: 0,
+                      color: Theme.of(context).colorScheme.surface,
+                      margin: EdgeInsets.zero,
+                      child: ExpansionTile(
+                        initiallyExpanded: _isLearningExpanded,
+                        onExpansionChanged: (expanded) {
+                          setState(() => _isLearningExpanded = expanded);
+                        },
+                        title: Row(
+                          children: [
+                            Icon(
+                              Icons.school,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Learning Materials',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.start,
+                              children: [
+                                _SampleTextCard(
+                                  title: 'Kindergarten Words',
+                                  description: '40 essential sight words',
+                                  icon: Icons.child_care,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/kindergarten.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.tertiaryContainer,
+                                ),
+                                _SampleTextCard(
+                                  title: 'First Grade Words',
+                                  description: '49 additional sight words',
+                                  icon: Icons.menu_book_rounded,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/firstgrade.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                ),
+                                _SampleTextCard(
+                                  title: 'Second Grade Words',
+                                  description: '46 advanced sight words',
+                                  icon: Icons.auto_stories_rounded,
+                                  onTap: () async {
+                                    final text = await rootBundle.loadString('assets/secondgrade.txt');
+                                    widget.onWordListSelected(text);
+                                  },
+                                  color: Theme.of(context).colorScheme.secondaryContainer,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

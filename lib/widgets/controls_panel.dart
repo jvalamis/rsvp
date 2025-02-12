@@ -1,61 +1,70 @@
 import 'package:flutter/material.dart';
 
 class ControlsPanel extends StatelessWidget {
-  final VoidCallback onStop;
-  final VoidCallback onRestart;
+  final double progress;
   final bool isPaused;
   final VoidCallback onPause;
-  final double progress;
+  final VoidCallback onStop;
+  final VoidCallback onRestart;
 
   const ControlsPanel({
     super.key,
-    required this.onStop,
-    required this.onRestart,
+    required this.progress,
     required this.isPaused,
     required this.onPause,
-    required this.progress,
+    required this.onStop,
+    required this.onRestart,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        LinearProgressIndicator(
-          value: progress,
-          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-          valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).colorScheme.primary,
+            ),
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: onPause,
-              icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+              icon: Icon(isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
               label: Text(isPaused ? 'Resume' : 'Pause'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
+            const SizedBox(width: 16),
+            FilledButton.icon(
               onPressed: onRestart,
               icon: const Icon(Icons.replay_rounded),
               label: const Text('Restart'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
+            const SizedBox(width: 16),
+            FilledButton.icon(
               onPressed: onStop,
-              icon: const Icon(Icons.stop),
+              icon: const Icon(Icons.stop_rounded),
               label: const Text('Stop'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.grey[800],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],

@@ -5,7 +5,7 @@ const double kMinAnimationDuration = 0.05; // 50ms minimum duration
 
 class WordProcessor {
   final String text;
-  int _wpm;  // Make it private
+  int _wpm;
   final Function(String) onWord;
   final Function(double) onProgress;
   final Function() onComplete;
@@ -14,177 +14,183 @@ class WordProcessor {
   List<String> _words = [];
   int _currentIndex = 0;
   bool _isInitialized = false;
-  Duration _wordDuration = Duration.zero;
+  bool _isMathMode = false;
+
+  // Add a map to store answers
+  final Map<String, String> _answers = {};
 
   WordProcessor({
     required this.text,
-    required int wpm,  // Change parameter name
+    required int wpm,
     required this.onWord,
     required this.onProgress,
     required this.onComplete,
-  }) : _wpm = wpm {  // Initialize private _wpm
-    _words = _tokenize(text);
+  }) : _wpm = wpm {
+    // Remove tokenization from constructor
   }
 
-  // Add getter for wpm if needed
   int get wpm => _wpm;
+
+  List<String> _tokenize(String text) {
+    // Check if this is math content
+    _isMathMode = text.contains(' = ?');
+    
+    if (_isMathMode) {
+      // For math, treat each line as one complete equation
+      return text
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .toList();
+    }
+
+    // Original tokenization for regular text
+    return text
+        .split(RegExp(r'(\s+)'))
+        .where((word) => word.trim().isNotEmpty)
+        .toList();
+  }
+
+  String? getAnswer(String problem) {
+    print('Getting answer for: $problem');  // Debug print 1
+    
+    if (!problem.contains('=')) return null;
+    
+    final parts = problem.split(' = ');
+    if (parts.length != 2) return null;
+
+    final equation = parts[0].trim();
+    print('Equation: $equation');  // Debug print 2
+    
+    final operands = equation.split(RegExp(r'[\+\-]'));
+    print('Operands: $operands');  // Debug print 3
+    
+    if (operands.length != 2) return null;
+
+    try {
+      final num1 = int.parse(operands[0].trim());
+      final num2 = int.parse(operands[1].trim());
+      
+      if (equation.contains('+')) {
+        final answer = (num1 + num2).toString();
+        print('Addition result: $answer');  // Debug print 4
+        return answer;
+      } else if (equation.contains('-')) {
+        final answer = (num1 - num2).toString();
+        print('Subtraction result: $answer');  // Debug print 5
+        return answer;
+      }
+    } catch (e) {
+      print('Error calculating: $e');
+      return null;
+    }
+    
+    return null;
+  }
+
+  void start() {
+    if (_words.isEmpty) return;  // Guard against empty list
+    
+    _currentIndex = 0;  // Always start at beginning
+    onWord(_words[0]);  // Show first word immediately
+    onProgress(0);      // Reset progress
+    _scheduleNextWord();
+  }
+
+  void _scheduleNextWord() {
+    if (_isPaused || _currentIndex >= _words.length) {
+      if (_currentIndex >= _words.length) {
+        onComplete();
+        _currentIndex = 0;
+      }
+      return;
+    }
+
+    final word = _words[_currentIndex];
+    onWord(word);
+    onProgress(_currentIndex / _words.length);
+
+    final delay = _isMathMode ? 3000 : _getDelayForWord(word);
+    
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: delay), () {
+      if (!_isPaused) {
+        _currentIndex++;
+        _scheduleNextWord();
+      }
+    });
+  }
+
+  void togglePause() {
+    _isPaused = !_isPaused;
+    if (!_isPaused) _scheduleNextWord();
+  }
+
+  void nextWord() {
+    if (_currentIndex < _words.length - 1) {
+      _timer?.cancel();
+      _isPaused = true;
+      _currentIndex++;
+      onWord(_words[_currentIndex]);
+      onProgress(_currentIndex / _words.length);
+    } else {
+      // At the end, call onComplete
+      onComplete();
+    }
+  }
+
+  void previousWord() {
+    if (_currentIndex > 0) {
+      _timer?.cancel();
+      _isPaused = true;
+      _currentIndex--;
+      onWord(_words[_currentIndex]);
+      onProgress(_currentIndex / _words.length);
+    }
+  }
+
+  void updateWPM(int wpm) {
+    _wpm = wpm;
+    if (!_isPaused) {
+      _timer?.cancel();
+      _scheduleNextWord();
+    }
+  }
+
+  void dispose() {
+    _timer?.cancel();
+  }
 
   Future<void> initialize() async {
     if (_isInitialized) return;
     
-    // Process text in chunks to allow UI updates
-    const chunkSize = 1000;
-    List<String> words = [];
+    // Do tokenization here instead
+    _words = _tokenize(text);
     
-    for (var i = 0; i < text.length; i += chunkSize) {
-      final end = (i + chunkSize < text.length) ? i + chunkSize : text.length;
-      final chunk = text.substring(i, end);
-      
-      // Tokenize chunk
-      words.addAll(_tokenize(chunk));
-      
-      // Update progress
-      onProgress(i / text.length);
-      
-      // Allow UI to update
-      await Future.delayed(const Duration(milliseconds: 1));
+    if (_words.isNotEmpty) {
+      onWord(_words[0]);  // Show first word immediately
     }
     
-    _words = words.where((word) => word.isNotEmpty).toList();
     _isInitialized = true;
     onProgress(0); // Reset progress
   }
 
-  List<String> _tokenize(String text) {
-    List<String> words = [];
-    String currentWord = '';
-    bool inAbbreviation = false;
+  void stop() {
+    _timer?.cancel();
+    _currentIndex = 0;
+    _isPaused = false;
+  }
 
-    // Patterns for abbreviations and place names
-    final placeNamePattern = RegExp(
-      r'[A-Z]\. (?:Place|Street|Road|Bridge|Ave|Boulevard|Square|Park|Building)',
-      caseSensitive: true,
-    );
-
-    final abbreviationPattern = RegExp(
-      r'\b(Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.|Sr\.|Jr\.|St\.|Ave\.|Rd\.|Blvd\.|Apt\.|'
-      r'[A-Z]\.|[A-Z]\.[A-Z]\.|[A-Z]\.[A-Z]\.[A-Z]\.)',
-      caseSensitive: true,
-    );
-
-    // Look-ahead function to check if this is part of a place name
-    bool isPlaceName(int index) {
-      if (index >= text.length - 2) return false;
-      String lookAhead = text.substring(index, math.min(index + 20, text.length));
-      return placeNamePattern.hasMatch(lookAhead);
-    }
-
-    for (int i = 0; i < text.length; i++) {
-      String char = text[i];
-      String? nextChar = i < text.length - 1 ? text[i + 1] : null;
-      String? prevChar = i > 0 ? text[i - 1] : null;
-
-      // First, check for single-letter place names (e.g., "K. Bridge")
-      if (prevChar == null && 
-          RegExp(r'[A-Z]').hasMatch(char) && 
-          nextChar == '.' && 
-          isPlaceName(i)) {
-        String lookAhead = text.substring(i, math.min(i + 20, text.length));
-        var match = placeNamePattern.firstMatch(lookAhead);
-        if (match != null) {
-          String placeName = match.group(0)!;
-          words.add(placeName);
-          i += placeName.length - 1;
-          currentWord = '';
-          continue;
-        }
-      }
-      // If we're at the start of a word and see a capital letter
-      else if ((prevChar?.trim().isEmpty ?? true) && 
-               RegExp(r'[A-Z]').hasMatch(char) && 
-               isPlaceName(i)) {
-        String lookAhead = text.substring(i, math.min(i + 20, text.length));
-        var match = placeNamePattern.firstMatch(lookAhead);
-        if (match != null) {
-          String placeName = match.group(0)!;
-          words.add(placeName);
-          i += placeName.length - 1;
-          currentWord = '';
-          continue;
-        }
-      }
-
-      // Handle abbreviations and periods
-      if (char == '.' && nextChar != null) {
-        String lookAhead = text.substring(i - 10 >= 0 ? i - 10 : 0, i + 1);
-        if (abbreviationPattern.hasMatch(lookAhead)) {
-          currentWord += char;
-          inAbbreviation = true;
-          continue;
-        }
-        
-        // Handle end of sentence
-        if (nextChar.trim().isEmpty || nextChar == "\"" || nextChar == "'") {
-          currentWord += char;
-          if (currentWord.isNotEmpty) words.add(currentWord.trim());
-          currentWord = '';
-          inAbbreviation = false;
-        } else {
-          currentWord += char;
-          inAbbreviation = true;
-        }
-      }
-      // Handle contractions and possessives
-      else if (char == "'" && nextChar != null && 
-               (RegExp(r'[sStTdDmMvVrRlL]').hasMatch(nextChar) || 
-                (nextChar == 'r' && prevChar == 'e'))) {
-        currentWord += char;
-        continue;
-      }
-      // Handle hyphenated words
-      else if (char == '-' && 
-              nextChar != null && 
-              prevChar != null &&
-              RegExp(r'[a-zA-Z]').hasMatch(nextChar) &&
-              RegExp(r'[a-zA-Z]').hasMatch(prevChar)) {
-        currentWord += char;
-        continue;
-      }
-      // Handle spaces
-      else if (char.trim().isEmpty) {
-        if (currentWord.isNotEmpty && !inAbbreviation) {
-          words.add(currentWord.trim());
-          currentWord = '';
-        } else if (inAbbreviation) {
-          currentWord += char;
-        }
-      }
-      // Handle numbers with decimals
-      else if (RegExp(r'[0-9]').hasMatch(char)) {
-        if (currentWord.isEmpty || RegExp(r'[0-9.]').hasMatch(currentWord)) {
-          currentWord += char;
-          continue;
-        }
-        if (currentWord.isNotEmpty) {
-          words.add(currentWord.trim());
-        }
-        currentWord = char;
-      }
-      // Handle all other characters
-      else {
-        currentWord += char;
-      }
-    }
-
-    // Add final word if exists
-    if (currentWord.isNotEmpty) {
-      words.add(currentWord.trim());
-    }
-
-    return words.where((w) => w.trim().isNotEmpty).map((w) => w.trim()).toList();
+  String peekCurrentWord() {
+    if (_words.isEmpty) return '';
+    return _words[_currentIndex];
   }
 
   int _getDelayForWord(String word) {
+    if (_isMathMode) {
+      // Give 3 seconds for each math problem
+      return 3000;
+    }
+
     final baseDelay = 60000 ~/ _wpm;
     print('WordProcessor: Base delay for $_wpm WPM: $baseDelay ms');
     
@@ -201,100 +207,17 @@ class WordProcessor {
     return baseDelay;
   }
 
-  void start() {
-    if (_currentIndex >= _words.length) {
-      _currentIndex = 0;
+  int _calculateAnswer(String equation) {
+    final parts = equation.split(RegExp(r'[\+\-]'));
+    final num1 = int.parse(parts[0].trim());
+    final num2 = int.parse(parts[1].trim());
+    
+    if (equation.contains('+')) {
+      return num1 + num2;
+    } else if (equation.contains('-')) {
+      return num1 - num2;
     }
     
-    _scheduleNextWord();
-  }
-
-  void updateWPM(int wpm) {
-    _wpm = wpm;
-    // Ensure we have a minimum animation duration even at high speeds
-    _wordDuration = Duration(
-      milliseconds: math.max(
-        (60000 / _wpm).round(),
-        (kMinAnimationDuration * 1000).round(),
-      ),
-    );
-    
-    // Always cancel and reschedule, even if paused
-    _timer?.cancel();
-    
-    // If we're not paused, schedule next word with new speed
-    if (!_isPaused) {
-      print('WordProcessor: Rescheduling with new WPM: $_wpm');
-      _scheduleNextWord();
-    }
-  }
-
-  void _scheduleNextWord() {
-    if (_isPaused || _currentIndex >= _words.length) {
-      if (_currentIndex >= _words.length) {
-        onComplete();
-      }
-      return;
-    }
-
-    final word = _words[_currentIndex];
-    onWord(word);
-    onProgress(_currentIndex / _words.length);
-
-    final delay = _getDelayForWord(word);
-    print("WordProcessor: Next word delay: $delay ms at $_wpm WPM");
-    
-    _timer?.cancel();
-    _timer = Timer(Duration(milliseconds: delay), () {
-      if (!_isPaused) {
-        _currentIndex++;
-        _scheduleNextWord();
-      }
-    });
-  }
-
-  void togglePause() {
-    _isPaused = !_isPaused;
-    if (!_isPaused) {
-      _scheduleNextWord();
-    }
-  }
-
-  void stop() {
-    _timer?.cancel();
-    _currentIndex = 0;
-  }
-
-  void dispose() {
-    _timer?.cancel();
-  }
-
-  void nextWord() {
-    if (_currentIndex < _words.length - 1) {
-      _timer?.cancel();  // Cancel any pending timer
-      _isPaused = true;  // Pause the auto-reading
-      _currentIndex++;
-      // Just display the word without scheduling next
-      final word = _words[_currentIndex];
-      onWord(word);
-      onProgress(_currentIndex / _words.length);
-    }
-  }
-
-  void previousWord() {
-    if (_currentIndex > 0) {
-      _timer?.cancel();  // Cancel any pending timer
-      _isPaused = true;  // Pause the auto-reading
-      _currentIndex--;
-      // Just display the word without scheduling next
-      final word = _words[_currentIndex];
-      onWord(word);
-      onProgress(_currentIndex / _words.length);
-    }
-  }
-
-  String peekCurrentWord() {
-    if (_words.isEmpty) return '';
-    return _words[_currentIndex];
+    return 0;
   }
 } 

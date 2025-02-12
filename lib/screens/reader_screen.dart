@@ -34,6 +34,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   String _loadingMessage = '';
   bool _showLoadingOverlay = false;
   final GlobalKey _startButtonKey = GlobalKey();
+  bool _isMathMode = false;
 
   @override
   void initState() {
@@ -47,6 +48,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     setState(() {
       _showLoadingOverlay = true;
       _loadingMessage = 'Preparing reader...';
+      // Check if this is math content by looking for equations
+      _isMathMode = _textController.text.contains(' = ?');
     });
 
     try {
@@ -64,12 +67,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
       await _processor!.initialize();
       setState(() {
         _isReading = true;
-        _isPaused = true;  // Set initial pause state
-        _currentWord = _processor?.peekCurrentWord() ?? '';
+        // Always start in paused state for text mode, unpause for math mode
+        _isPaused = !_isMathMode;
       });
       
-      // Start paused
-      _processor!.togglePause(); // This puts it in paused state
+      // Start paused only for text mode
+      if (!_isMathMode) {
+        _processor!.togglePause();
+      }
       _keyboardFocusNode.requestFocus();
     } finally {
       setState(() {
@@ -98,9 +103,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
-  // Update _handleTextChange to scroll when text is entered
+  // Update _handleTextChange to enable the start button
   Future<void> _handleTextChange(String text) async {
+    setState(() {
     _textController.text = text;
+    });
+    
     if (text.isNotEmpty) {
       // Wait for next frame to ensure the UI has updated
       await Future.delayed(const Duration(milliseconds: 100));
@@ -127,8 +135,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
       
       _processor?.dispose();
       _processor = null;
-      _textController.text = text;
-      
+        _textController.text = text;
+        
       // Add delay to ensure UI is updated
       await Future.delayed(const Duration(milliseconds: 100));
       
@@ -148,13 +156,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  // Update _handlePaste to also trigger scrolling
+  // Update _handlePaste to use setState
   Future<void> _handlePaste() async {
     setState(() => _isLoading = true);
     try {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
       if (data?.text != null && data!.text!.isNotEmpty) {
-        await _handleTextChange(data.text!);  // Use _handleTextChange to handle scrolling
+        setState(() {
+          _textController.text = data.text!;  // Update text directly
+        });
+        await _handleTextChange(data.text!);
       }
     } finally {
       setState(() => _isLoading = false);
@@ -350,7 +361,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             onChanged: _handleTextChange,
                             style: Theme.of(context).textTheme.bodyLarge,
                             decoration: InputDecoration(
-                              hintText: 'Or choose from our reading materials above...',
+                              hintText: 'Paste text or equations here...',
                               filled: true,
                               fillColor: Theme.of(context).colorScheme.surface,
                               border: OutlineInputBorder(
@@ -374,11 +385,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           // If width is less than 600, use vertical layout
-                          if (constraints.maxWidth < 600) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                // WPM Controls in a row
+                              if (!_isMathMode) ...[
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -389,7 +399,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                           _wpmController.text = _wpm.toString();
                                         });
                                       },
-                                      icon: const Icon(Icons.remove_rounded, size: 20),
+                                      icon: const Icon(Icons.remove_rounded),
                                       style: IconButton.styleFrom(
                                         backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                         foregroundColor: Theme.of(context).colorScheme.primary,
@@ -437,7 +447,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                           _wpmController.text = _wpm.toString();
                                         });
                                       },
-                                      icon: const Icon(Icons.add_rounded, size: 20),
+                                      icon: const Icon(Icons.add_rounded),
                                       style: IconButton.styleFrom(
                                         backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                         foregroundColor: Theme.of(context).colorScheme.primary,
@@ -447,6 +457,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 12),
+                              ],
                                 // Keyboard shortcuts
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -457,13 +468,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                                     ),
                                     const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        'Space: Pause • Esc: Stop • ↑↓: Speed',
+                                  Text(
+                                    _isMathMode 
+                                      ? 'Tap to reveal answer • Tap again for next problem'
+                                      : 'Space: Pause • Left/Right: Navigate • Esc: Stop',
                                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                                        ),
-                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ],
@@ -471,10 +481,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 const SizedBox(height: 12),
                                 // Start Reading button
                                 FilledButton.icon(
-                                  key: _startButtonKey,
-                                  onPressed: _textController.text.isEmpty 
-                                    ? null 
-                                    : () => _startReading(isSmallScreen),
+                                key: _startButtonKey,
+                                onPressed: _textController.text.isEmpty 
+                                  ? null 
+                                  : () => _startReading(isSmallScreen),
                                   icon: const Icon(Icons.play_arrow_rounded),
                                   label: const Text('Start Reading'),
                                   style: FilledButton.styleFrom(
@@ -483,115 +493,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 ),
                               ],
                             );
-                          } else {
-                            // Original horizontal layout for wider screens
-                            return Row(
-                              children: [
-                                // WPM Controls
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton.filled(
-                                      onPressed: () {
-                                        setState(() {
-                                          _wpm = math.max(60, _wpm - 50);
-                                          _wpmController.text = _wpm.toString();
-                                        });
-                                      },
-                                      icon: const Icon(Icons.remove_rounded, size: 20),
-                                      style: IconButton.styleFrom(
-                                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                        foregroundColor: Theme.of(context).colorScheme.primary,
-                                        padding: const EdgeInsets.all(8),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: 100,
-                                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                                      child: TextField(
-                                        controller: _wpmController,
-                                        keyboardType: TextInputType.number,
-                                        textAlign: TextAlign.center,
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: -0.5,
-                                        ),
-                                        decoration: InputDecoration(
-                                          isDense: true,
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                          suffixText: 'WPM',
-                                          suffixStyle: TextStyle(
-                                            fontSize: 12,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                          border: InputBorder.none,
-                                        ),
-                                        onChanged: (value) {
-                                          final newWpm = int.tryParse(value);
-                                          if (newWpm != null) {
-                                            setState(() {
-                                              _wpm = math.min(math.max(newWpm, 60), 1000);
-                                              if (_wpm != newWpm) {
-                                                _wpmController.text = _wpm.toString();
-                                              }
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    IconButton.filled(
-                                      onPressed: () {
-                                        setState(() {
-                                          _wpm = math.min(1000, _wpm + 50);
-                                          _wpmController.text = _wpm.toString();
-                                        });
-                                      },
-                                      icon: const Icon(Icons.add_rounded, size: 20),
-                                      style: IconButton.styleFrom(
-                                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                        foregroundColor: Theme.of(context).colorScheme.primary,
-                                        padding: const EdgeInsets.all(8),
+                        },
                                       ),
                                     ),
                                   ],
-                                ),
-                                // Keyboard shortcuts
-                                const Spacer(),
-                                Icon(
-                                  Icons.keyboard_rounded,
-                                  size: 16,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Space: Pause • Esc: Stop • ↑↓: Speed',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                // Start Reading button
-                                FilledButton.icon(
-                                  key: _startButtonKey,
-                                  onPressed: _textController.text.isEmpty 
-                                    ? null 
-                                    : () => _startReading(isSmallScreen),
-                                  icon: const Icon(Icons.play_arrow_rounded),
-                                  label: const Text('Start Reading'),
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   ),
                                 ),
                               ],
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -625,10 +533,78 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 WordDisplay(
                   word: _currentWord,
                   focusScale: settings.focusScale,
+                  processor: _processor,
                 ),
-                const SizedBox(height: 32),
-                // Only show WPM controls on desktop here
-                if (!isSmallScreen)  
+                const SizedBox(height: 16),
+                
+                // Add progress bar for math mode
+                if (_isMathMode)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      children: [
+                        LinearProgressIndicator(
+                          value: _progress,
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                
+                // Math mode controls
+                if (_isMathMode)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: _stopReading,
+                        icon: const Icon(Icons.stop_rounded),
+                        label: const Text('Stop'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.grey[800],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      FilledButton.icon(
+                        onPressed: _restartReading,
+                        icon: const Icon(Icons.replay_rounded),
+                        label: const Text('Restart'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      FilledButton.icon(
+                        onPressed: () {
+                          if (_processor != null) {
+                            setState(() {
+                              _textController.text = _randomizeEquations(_textController.text);
+                            });
+                            _restartReading();
+                          }
+                        },
+                        icon: const Icon(Icons.shuffle),
+                        label: const Text('Randomize'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                
+                // Only show WPM controls if not in math mode
+                if (!_isMathMode && !isSmallScreen)  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -679,20 +655,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     ],
                   ),
                 const SizedBox(height: 16),
-                // Only show ControlsPanel on desktop
-                if (!isSmallScreen)
-                  ControlsPanel(
-                    progress: _progress,
-                    isPaused: _isPaused,
-                    onPause: _togglePause,
-                    onStop: _stopReading,
+                // Only show ControlsPanel if not in math mode
+                if (!_isMathMode && !isSmallScreen)
+                ControlsPanel(
+                  progress: _progress,
+                  isPaused: _isPaused,
+                  onPause: _togglePause,
+                  onStop: _stopReading,
                     onRestart: _restartReading,
-                  ),
+                ),
               ],
             ),
 
-            // Show mobile controls only on small screens
-            if (isSmallScreen)
+            // Show mobile controls only on small screens and not in math mode
+            if (isSmallScreen && !_isMathMode)
               Positioned(
                 left: 0,
                 right: 0,
@@ -845,33 +821,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 ),
               ),
 
-            // Show keyboard hints only on desktop
-            if (!isSmallScreen)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 16,
-                child: Column(
-                  children: [
-                    Text(
-                      'Space: Play/Pause | Esc: Stop | ↑↓: Speed | ←→: Navigate Words',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      'Current Speed: $_wpm WPM',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+            // Show control summary for both math and text modes
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 16,
+              child: Center(
+                child: _buildControlSummary(isSmallScreen),
               ),
+            ),
           ],
         ),
       ),
@@ -934,5 +892,30 @@ class _ReaderScreenState extends State<ReaderScreen> {
     
     // Start fresh with same text
     _startReading(_isSmallScreen);  // Use the getter here too
+  }
+
+  Widget _buildControlSummary(bool isSmallScreen) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _isMathMode
+          ? 'Tap or ← → to navigate • Tap to reveal answer'
+          : 'Space: Pause • Left/Right: Navigate • Esc: Stop',
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.8),
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  String _randomizeEquations(String text) {
+    final equations = text.split('\n').where((line) => line.trim().isNotEmpty).toList();
+    equations.shuffle();
+    return equations.join('\n');
   }
 } 
