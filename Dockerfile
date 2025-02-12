@@ -9,6 +9,10 @@ RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /flutte
 ENV PATH="/flutter/bin:$PATH"
 ENV FLUTTER_ENV=production
 
+# Initialize Flutter
+RUN flutter precache
+RUN flutter doctor
+
 # Copy only necessary files first
 COPY pubspec.* ./
 RUN flutter pub get
