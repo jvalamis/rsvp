@@ -5,13 +5,9 @@ FROM dart:stable AS build
 WORKDIR /app
 
 # Install Flutter more efficiently
-RUN git clone --depth 1 https://github.com/flutter/flutter.git -b stable /flutter
+RUN git clone --depth 1 https://github.com/flutter/flutter.git -b main /flutter
 ENV PATH="/flutter/bin:$PATH"
 ENV FLUTTER_ENV=production
-
-# Initialize Flutter
-RUN flutter precache
-RUN flutter doctor
 
 # Copy only necessary files first
 COPY pubspec.* ./
