@@ -32,15 +32,19 @@ class WordProcessor {
   int get wpm => _wpm;
 
   List<String> _tokenize(String text) {
-    // Check if this is math content
-    _isMathMode = text.contains(' = ?');
+    // More explicit math mode detection
+    _isMathMode = text.contains(' = ?') || text.contains('+') || text.contains('-');
+    print('Math mode: $_isMathMode'); // This will show in dev at least
     
     if (_isMathMode) {
       // For math, treat each line as one complete equation
-      return text
+      final equations = text
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
+          .map((line) => line.trim())  // Ensure clean input
+          .where((line) => line.contains('='))  // Only valid equations
           .toList();
+      return equations;
     }
 
     // Original tokenization for regular text
@@ -51,40 +55,41 @@ class WordProcessor {
   }
 
   String? getAnswer(String problem) {
-    print('Getting answer for: $problem');  // Debug print 1
+    // More robust equation handling
+    if (!_isMathMode) return null;
     
-    if (!problem.contains('=')) return null;
+    final cleanProblem = problem.trim();
+    if (!cleanProblem.contains('=')) return null;
     
-    final parts = problem.split(' = ');
+    final parts = cleanProblem.split('=');
     if (parts.length != 2) return null;
 
     final equation = parts[0].trim();
-    print('Equation: $equation');  // Debug print 2
     
-    final operands = equation.split(RegExp(r'[\+\-]'));
-    print('Operands: $operands');  // Debug print 3
+    // More explicit operator detection
+    final hasPlus = equation.contains('+');
+    final hasMinus = equation.contains('-');
     
+    if (!hasPlus && !hasMinus) return null;
+    
+    final operands = hasPlus 
+        ? equation.split('+') 
+        : equation.split('-');
+        
     if (operands.length != 2) return null;
 
     try {
       final num1 = int.parse(operands[0].trim());
       final num2 = int.parse(operands[1].trim());
       
-      if (equation.contains('+')) {
-        final answer = (num1 + num2).toString();
-        print('Addition result: $answer');  // Debug print 4
-        return answer;
-      } else if (equation.contains('-')) {
-        final answer = (num1 - num2).toString();
-        print('Subtraction result: $answer');  // Debug print 5
-        return answer;
+      if (hasPlus) {
+        return (num1 + num2).toString();
+        } else {
+        return (num1 - num2).toString();
       }
     } catch (e) {
-      print('Error calculating: $e');
       return null;
     }
-    
-    return null;
   }
 
   void start() {
