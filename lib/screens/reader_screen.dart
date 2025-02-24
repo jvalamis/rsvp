@@ -62,6 +62,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         onWord: (word) => setState(() => _currentWord = word),
         onProgress: (progress) => setState(() => _progress = progress),
         onComplete: () => setState(() => _isReading = false),
+        isMathMode: _isMathMode,
       );
       
       await _processor!.initialize();
@@ -121,10 +122,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   // Update _handleTextSelected to scroll after text is loaded
-  Future<void> _handleTextSelected(String text) async {
+  Future<void> _handleTextSelected(String text, bool isMathMode) async {
     setState(() {
       _showLoadingOverlay = true;
       _loadingMessage = 'Loading text...';
+      _isMathMode = isMathMode;  // Set mode from parameter
     });
     
     try {
@@ -135,8 +137,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
       
       _processor?.dispose();
       _processor = null;
-        _textController.text = text;
-        
+      _textController.text = text;
+      
       // Add delay to ensure UI is updated
       await Future.delayed(const Duration(milliseconds: 100));
       

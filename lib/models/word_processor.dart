@@ -25,29 +25,26 @@ class WordProcessor {
     required this.onWord,
     required this.onProgress,
     required this.onComplete,
+    bool isMathMode = false,
   }) : _wpm = wpm {
-    // Remove tokenization from constructor
+    _isMathMode = isMathMode;
   }
 
   int get wpm => _wpm;
 
   List<String> _tokenize(String text) {
-    // More explicit math mode detection
-    _isMathMode = text.contains(' = ?') || text.contains('+') || text.contains('-');
-    print('Math mode: $_isMathMode'); // This will show in dev at least
-    
     if (_isMathMode) {
       // For math, treat each line as one complete equation
       final equations = text
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
-          .map((line) => line.trim())  // Ensure clean input
-          .where((line) => line.contains('='))  // Only valid equations
+          .map((line) => line.trim())
+          .where((line) => line.contains('='))
           .toList();
       return equations;
     }
 
-    // Original tokenization for regular text
+    // Regular text tokenization
     return text
         .split(RegExp(r'(\s+)'))
         .where((word) => word.trim().isNotEmpty)

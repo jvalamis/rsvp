@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';  // Add this for clipboard
 
 class WordLists extends StatefulWidget {
-  final Function(String) onWordListSelected;
+  final Function(String, bool isMathMode) onWordListSelected;
 
   const WordLists({
     super.key,
@@ -94,7 +94,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.add_circle_outline,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/kindergarten_addition.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, true);
                                   },
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
@@ -104,7 +104,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.remove_circle_outline,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/kindergarten_subtraction.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, false);
                                   },
                                   color: Theme.of(context).colorScheme.secondary,
                                 ),
@@ -195,7 +195,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.auto_stories,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/crimeandpunishment.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, false);
                                   },
                                   color: Theme.of(context).colorScheme.primaryContainer,
                                 ),
@@ -205,7 +205,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.auto_stories,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/zarathustra.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, false);
                                   },
                                   color: Theme.of(context).colorScheme.secondaryContainer,
                                 ),
@@ -258,7 +258,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.child_care,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/kindergarten.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, false);
                                   },
                                   color: Theme.of(context).colorScheme.tertiaryContainer,
                                 ),
@@ -268,7 +268,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.menu_book_rounded,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/firstgrade.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, false);
                                   },
                                   color: Theme.of(context).colorScheme.primaryContainer,
                                 ),
@@ -278,7 +278,7 @@ class _WordListsState extends State<WordLists> {
                                   icon: Icons.auto_stories_rounded,
                                   onTap: () async {
                                     final text = await rootBundle.loadString('assets/secondgrade.txt');
-                                    widget.onWordListSelected(text);
+                                    widget.onWordListSelected(text, false);
                                   },
                                   color: Theme.of(context).colorScheme.secondaryContainer,
                                 ),
